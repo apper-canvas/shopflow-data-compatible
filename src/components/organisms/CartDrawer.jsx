@@ -14,9 +14,9 @@ const CartDrawer = ({
   onClearCart,
   subtotal = 0 
 }) => {
-  const handleCheckout = () => {
-    // Placeholder for checkout functionality
-    alert("Checkout functionality will be implemented in future updates")
+const handleCheckout = () => {
+    onClose() // Close the cart drawer
+    window.location.href = '/checkout/cart-review'
   }
 
   return (

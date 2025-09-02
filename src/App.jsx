@@ -13,6 +13,9 @@ import Login from "@/components/pages/Login";
 import Signup from "@/components/pages/Signup";
 import Callback from "@/components/pages/Callback";
 import ErrorPage from "@/components/pages/ErrorPage";
+import CheckoutLayout from "@/components/pages/CheckoutLayout";
+import CartReview from "@/components/pages/CartReview";
+import ShippingInfo from "@/components/pages/ShippingInfo";
 
 // Create auth context
 export const AuthContext = createContext(null);
@@ -136,6 +139,10 @@ function AppContent() {
             <Route path="/category/:category" element={<CategoryPage />} />
             <Route path="/search" element={<SearchResults />} />
             <Route path="/wishlist" element={<WishlistPage />} />
+          </Route>
+          <Route path="/checkout" element={<CheckoutLayout />}>
+            <Route path="cart-review" element={<CartReview />} />
+            <Route path="shipping" element={<ShippingInfo />} />
           </Route>
         </Routes>
         <ToastContainer
