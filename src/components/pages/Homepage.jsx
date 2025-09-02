@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react"
 import { useOutletContext } from "react-router-dom"
 import ProductGrid from "@/components/organisms/ProductGrid"
-import productService from "@/services/api/productService"
+import { productService } from "@/services/api/productService"
 
 const Homepage = () => {
   const [products, setProducts] = useState([])
