@@ -1,0 +1,110 @@
+[
+  {
+    "Id": 1,
+    "title": "Premium Wireless Headphones",
+    "price": 299.99,
+    "image": "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400&h=400&fit=crop&crop=center",
+    "description": "High-quality wireless headphones with noise cancellation and premium sound quality.",
+    "category": "Electronics",
+    "inStock": true
+  },
+  {
+    "Id": 2,
+    "title": "Smart Fitness Watch",
+    "price": 199.99,
+    "image": "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400&h=400&fit=crop&crop=center",
+    "description": "Advanced fitness tracking with heart rate monitoring and GPS capabilities.",
+    "category": "Electronics",
+    "inStock": true
+  },
+  {
+    "Id": 3,
+    "title": "Designer Coffee Mug Set",
+    "price": 49.99,
+    "image": "https://images.unsplash.com/photo-1514228742587-6b1558fcf93a?w=400&h=400&fit=crop&crop=center",
+    "description": "Set of 4 ceramic mugs with modern minimalist design.",
+    "category": "Home & Kitchen",
+    "inStock": true
+  },
+  {
+    "Id": 4,
+    "title": "Organic Cotton T-Shirt",
+    "price": 39.99,
+    "image": "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=400&h=400&fit=crop&crop=center",
+    "description": "Comfortable organic cotton t-shirt in various colors and sizes.",
+    "category": "Clothing",
+    "inStock": true
+  },
+  {
+    "Id": 5,
+    "title": "Modern Desk Lamp",
+    "price": 89.99,
+    "image": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=crop&crop=center",
+    "description": "Adjustable LED desk lamp with touch controls and USB charging port.",
+    "category": "Home & Kitchen",
+    "inStock": true
+  },
+  {
+    "Id": 6,
+    "title": "Leather Crossbody Bag",
+    "price": 129.99,
+    "image": "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=400&h=400&fit=crop&crop=center",
+    "description": "Handcrafted genuine leather crossbody bag with multiple compartments.",
+    "category": "Accessories",
+    "inStock": true
+  },
+  {
+    "Id": 7,
+    "title": "Bluetooth Speaker",
+    "price": 79.99,
+    "image": "https://images.unsplash.com/photo-1608043152269-423dbba4e7e1?w=400&h=400&fit=crop&crop=center",
+    "description": "Portable waterproof Bluetooth speaker with 12-hour battery life.",
+    "category": "Electronics",
+    "inStock": true
+  },
+  {
+    "Id": 8,
+    "title": "Yoga Mat Premium",
+    "price": 59.99,
+    "image": "https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=400&h=400&fit=crop&crop=center",
+    "description": "Non-slip premium yoga mat with alignment lines and carrying strap.",
+    "category": "Sports",
+    "inStock": false
+  },
+  {
+    "Id": 9,
+    "title": "Stainless Steel Water Bottle",
+    "price": 34.99,
+    "image": "https://images.unsplash.com/photo-1602143407151-7111542de6e8?w=400&h=400&fit=crop&crop=center",
+    "description": "Insulated stainless steel water bottle that keeps drinks cold for 24 hours.",
+    "category": "Sports",
+    "inStock": true
+  },
+  {
+    "Id": 10,
+    "title": "Wireless Charging Pad",
+    "price": 45.99,
+    "image": "https://images.unsplash.com/photo-1586953208448-b95a79798f07?w=400&h=400&fit=crop&crop=center",
+    "description": "Fast wireless charging pad compatible with all Qi-enabled devices.",
+    "category": "Electronics",
+    "inStock": true
+  },
+  {
+    "Id": 11,
+    "title": "Scented Candle Collection",
+    "price": 69.99,
+    "image": "https://images.unsplash.com/photo-1602874801007-693ffc12c9a4?w=400&h=400&fit=crop&crop=center",
+    "description": "Set of 3 premium soy wax candles with natural essential oil scents.",
+    "category": "Home & Kitchen",
+    "inStock": true
+  },
+  {
+    "Id": 12,
+    "title": "Gaming Mouse Pad",
+    "price": 24.99,
+    "image": "https://images.unsplash.com/photo-1527864550417-7fd91fc51a46?w=400&h=400&fit=crop&crop=center",
+    "description": "Large gaming mouse pad with smooth surface and non-slip rubber base.",
+    "category": "Electronics",
+    "inStock": true
+  }
+]
