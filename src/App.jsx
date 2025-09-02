@@ -5,6 +5,7 @@ import { ToastContainer } from "react-toastify";
 import { setUser, clearUser } from './store/userSlice';
 import Layout from "@/components/organisms/Layout";
 import WishlistPage from "@/components/pages/WishlistPage";
+import OrdersPage from "@/components/pages/OrdersPage";
 import Homepage from "@/components/pages/Homepage";
 import ProductDetail from "@/components/pages/ProductDetail";
 import CategoryPage from "@/components/pages/CategoryPage";
@@ -16,7 +17,6 @@ import ErrorPage from "@/components/pages/ErrorPage";
 import CheckoutLayout from "@/components/pages/CheckoutLayout";
 import CartReview from "@/components/pages/CartReview";
 import ShippingInfo from "@/components/pages/ShippingInfo";
-
 // Create auth context
 export const AuthContext = createContext(null);
 
@@ -139,6 +139,7 @@ function AppContent() {
             <Route path="/category/:category" element={<CategoryPage />} />
             <Route path="/search" element={<SearchResults />} />
             <Route path="/wishlist" element={<WishlistPage />} />
+            <Route path="/orders" element={<OrdersPage />} />
           </Route>
           <Route path="/checkout" element={<CheckoutLayout />}>
             <Route path="cart-review" element={<CartReview />} />

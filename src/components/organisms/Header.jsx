@@ -60,6 +60,13 @@ const Header = ({ cartItemCount, onCartClick, onSearch }) => {
               <SearchBar onSearch={onSearch} />
             </div>
             
+            <Link
+              to="/orders"
+              className="text-primary hover:text-accent font-medium transition-colors hidden md:block"
+            >
+              My Orders
+            </Link>
+            
             <WishlistIcon itemCount={wishlistCount} />
             
             <CartIcon
