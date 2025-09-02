@@ -94,7 +94,7 @@ const ShippingInfo = () => {
       errors.country = 'Country is required';
     }
 
-    // Phone number validation (if provided)
+// Phone number validation (if provided)
 if (formData.phoneNumber && !/^[\d\s\-()+ ]{10,}$/.test(formData.phoneNumber.replace(/\s/g, ''))) {
       errors.phoneNumber = 'Please enter a valid phone number';
     }
