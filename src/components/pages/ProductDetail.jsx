@@ -4,13 +4,14 @@ import { useSelector } from "react-redux"
 import { toast } from "react-toastify"
 import Button from "@/components/atoms/Button"
 import ApperIcon from "@/components/ApperIcon"
+import HeartButton from "@/components/molecules/HeartButton"
 import Loading from "@/components/ui/Loading"
 import Error from "@/components/ui/Error"
 import { useCart } from "@/hooks/useCart"
+import { useWishlist } from "@/hooks/useWishlist"
 import { productService } from "@/services/api/productService"
 import { reviewService } from "@/services/api/reviewService"
 import { helpfulnessVoteService } from "@/services/api/helpfulnessVoteService"
-
 const StarRating = ({ rating, maxStars = 5, size = 16, className = "" }) => {
   return (
     <div className={`flex items-center ${className}`}>
@@ -374,7 +375,8 @@ const ProductDetail = () => {
   const [product, setProduct] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
-  const { addToCart } = useCart()
+const { addToCart } = useCart()
+  const { isInWishlist, toggleWishlist, wishlistItems } = useWishlist()
 
   useEffect(() => {
     const loadProduct = async () => {
@@ -396,10 +398,20 @@ const ProductDetail = () => {
     }
   }, [id])
 
-  const handleAddToCart = () => {
+const handleAddToCart = () => {
     if (product && product.inStock) {
       addToCart(product)
     }
+  }
+
+  const handleWishlistToggle = () => {
+    if (product) {
+      toggleWishlist(product)
+    }
+  }
+
+  const getWishlistSaveCount = () => {
+    return wishlistItems.filter(item => item.Id === product?.Id).length > 0 ? 1 : 0
   }
 
   if (loading) {
@@ -489,7 +501,7 @@ const ProductDetail = () => {
               {product.description}
             </p>
 
-            <div className="flex items-center gap-2">
+<div className="flex items-center gap-2">
               <span className="font-medium text-primary">Category:</span>
               <span className="text-secondary">{product.category}</span>
             </div>
@@ -501,15 +513,27 @@ const ProductDetail = () => {
               </span>
             </div>
 
-            <Button
-              onClick={handleAddToCart}
-              disabled={!product.inStock}
-              className="w-full mt-6"
-              size="lg"
-            >
-              <ApperIcon name="ShoppingCart" size={20} className="mr-2" />
-              {product.inStock ? 'Add to Cart' : 'Out of Stock'}
-            </Button>
+            <div className="flex items-center gap-4 mt-6">
+              <Button
+                onClick={handleAddToCart}
+                disabled={!product.inStock}
+                className="flex-1"
+                size="lg"
+              >
+                <ApperIcon name="ShoppingCart" size={20} className="mr-2" />
+                {product.inStock ? 'Add to Cart' : 'Out of Stock'}
+              </Button>
+
+              <HeartButton
+                isInWishlist={isInWishlist(product.Id)}
+                onClick={handleWishlistToggle}
+                size={24}
+                variant="outline"
+                showCount={true}
+                count={getWishlistSaveCount()}
+                className="px-4 py-3 h-12"
+              />
+            </div>
           </div>
         </div>
       </div>

@@ -2,9 +2,12 @@ import React from "react"
 import { Link } from "react-router-dom"
 import SearchBar from "@/components/molecules/SearchBar"
 import CartIcon from "@/components/molecules/CartIcon"
+import WishlistIcon from "@/components/molecules/WishlistIcon"
 import ApperIcon from "@/components/ApperIcon"
+import { useWishlist } from "@/hooks/useWishlist"
 
 const Header = ({ cartItemCount, onCartClick, onSearch }) => {
+  const { wishlistCount } = useWishlist()
   const categories = ["Electronics", "Clothing", "Home & Kitchen", "Sports", "Accessories"]
 
   return (
@@ -51,11 +54,13 @@ const Header = ({ cartItemCount, onCartClick, onSearch }) => {
             </div>
           </nav>
 
-          {/* Search & Cart */}
+{/* Search & Cart */}
           <div className="flex items-center gap-4">
             <div className="hidden sm:block">
               <SearchBar onSearch={onSearch} />
             </div>
+            
+            <WishlistIcon itemCount={wishlistCount} />
             
             <CartIcon
               itemCount={cartItemCount}

@@ -17,7 +17,6 @@ const Layout = () => {
     openDrawer,
     closeDrawer
   } = useCart()
-
 const handleSearch = async (query) => {
     // This function is now handled by SearchBar component directly
     // but kept for backwards compatibility
@@ -27,14 +26,14 @@ const handleSearch = async (query) => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+<div className="min-h-screen bg-background">
       <Header
         cartItemCount={getItemCount()}
         onCartClick={openDrawer}
         onSearch={handleSearch}
       />
       
-      <main className="flex-1">
+<main className="flex-1">
         <Outlet context={{ addToCart }} />
       </main>
 

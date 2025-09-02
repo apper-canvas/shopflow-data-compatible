@@ -4,6 +4,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { ToastContainer } from "react-toastify";
 import { setUser, clearUser } from './store/userSlice';
 import Layout from "@/components/organisms/Layout";
+import WishlistPage from "@/components/pages/WishlistPage";
 import Homepage from "@/components/pages/Homepage";
 import ProductDetail from "@/components/pages/ProductDetail";
 import CategoryPage from "@/components/pages/CategoryPage";
@@ -127,13 +128,14 @@ function AppContent() {
         <Routes>
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
-          <Route path="/callback" element={<Callback />} />
+<Route path="/callback" element={<Callback />} />
           <Route path="/error" element={<ErrorPage />} />
 <Route path="/" element={<Layout />}>
             <Route index element={<Homepage />} />
             <Route path="/product/:id" element={<ProductDetail />} />
             <Route path="/category/:category" element={<CategoryPage />} />
             <Route path="/search" element={<SearchResults />} />
+            <Route path="/wishlist" element={<WishlistPage />} />
           </Route>
         </Routes>
         <ToastContainer

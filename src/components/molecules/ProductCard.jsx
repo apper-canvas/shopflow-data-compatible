@@ -1,9 +1,18 @@
 import React from "react"
 import Button from "@/components/atoms/Button"
 import ApperIcon from "@/components/ApperIcon"
+import HeartButton from "@/components/molecules/HeartButton"
 import { cn } from "@/utils/cn"
+import { useWishlist } from "@/hooks/useWishlist"
 
 const ProductCard = ({ product, onAddToCart, className }) => {
+  const { isInWishlist, toggleWishlist } = useWishlist()
+
+  const handleWishlistToggle = (e) => {
+    e.preventDefault()
+    e.stopPropagation()
+    toggleWishlist(product)
+  }
   const handleAddToCart = () => {
 if (product.inStock && onAddToCart) {
       onAddToCart(product)
@@ -32,6 +41,16 @@ src={product.image}
             <p className="text-gray-500 text-sm">Image not available</p>
           </div>
         </div>
+
+        {/* Heart button in top-right corner */}
+        <div className="absolute top-3 right-3">
+          <HeartButton
+            isInWishlist={isInWishlist(product.Id)}
+            onClick={handleWishlistToggle}
+            className="bg-white/90 backdrop-blur-sm hover:bg-white shadow-md"
+          />
+        </div>
+
 {!product.inStock && (
           <div className="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center">
             <span className="bg-surface text-primary px-3 py-1 rounded-full text-sm font-medium">
