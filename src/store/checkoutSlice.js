@@ -3,6 +3,8 @@ import { createSlice } from '@reduxjs/toolkit';
 const initialState = {
   currentStep: 'cart-review',
   sessionId: null,
+  appliedDiscount: null,
+  discountCode: '',
   shippingInfo: {
     firstName: '',
     lastName: '',
@@ -25,12 +27,18 @@ const initialState = {
 export const checkoutSlice = createSlice({
   name: 'checkout',
   initialState,
-  reducers: {
+reducers: {
     setCurrentStep: (state, action) => {
       state.currentStep = action.payload;
     },
     setSessionId: (state, action) => {
       state.sessionId = action.payload;
+    },
+    setAppliedDiscount: (state, action) => {
+      state.appliedDiscount = action.payload;
+    },
+    setDiscountCode: (state, action) => {
+      state.discountCode = action.payload;
     },
     updateShippingInfo: (state, action) => {
       state.shippingInfo = {
@@ -66,6 +74,8 @@ export const checkoutSlice = createSlice({
 export const {
   setCurrentStep,
   setSessionId,
+  setAppliedDiscount,
+  setDiscountCode,
   updateShippingInfo,
   setShippingInfo,
   setValidationErrors,

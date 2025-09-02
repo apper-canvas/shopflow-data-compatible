@@ -1,10 +1,10 @@
-import React from "react"
-import { motion, AnimatePresence } from "framer-motion"
-import Button from "@/components/atoms/Button"
-import CartItem from "@/components/molecules/CartItem"
-import ApperIcon from "@/components/ApperIcon"
-import Empty from "@/components/ui/Empty"
-
+import React, { useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
+import ApperIcon from "@/components/ApperIcon";
+import CartItem from "@/components/molecules/CartItem";
+import Empty from "@/components/ui/Empty";
+import Input from "@/components/atoms/Input";
+import Button from "@/components/atoms/Button";
 const CartDrawer = ({ 
   isOpen, 
   onClose, 
@@ -14,11 +14,51 @@ const CartDrawer = ({
   onClearCart,
   subtotal = 0 
 }) => {
-const handleCheckout = () => {
-    onClose() // Close the cart drawer
-    window.location.href = '/checkout/cart-review'
-  }
+  const [discountCode, setDiscountCode] = useState('');
+  const [appliedDiscount, setAppliedDiscount] = useState(null);
 
+  const applyDiscountCode = async (code) => {
+    if (!code.trim()) return;
+    
+    // Mock discount logic - replace with actual API call
+    const mockDiscounts = {
+      'SAVE10': { code: 'SAVE10', type: 'percentage', value: 10 },
+      'WELCOME5': { code: 'WELCOME5', type: 'fixed', value: 5 },
+      'FREESHIP': { code: 'FREESHIP', type: 'shipping', value: 0 }
+    };
+    
+    const discount = mockDiscounts[code.toUpperCase()];
+    if (discount) {
+      let amount = 0;
+      if (discount.type === 'percentage') {
+        amount = subtotal * (discount.value / 100);
+      } else if (discount.type === 'fixed') {
+        amount = Math.min(discount.value, subtotal);
+      }
+      
+      setAppliedDiscount({
+        code: discount.code,
+        type: discount.type,
+        value: discount.value,
+        amount: amount
+      });
+      setDiscountCode('');
+    }
+  };
+
+  const removeDiscount = () => {
+    setAppliedDiscount(null);
+  };
+
+  const getFinalTotal = () => {
+    if (!appliedDiscount) return subtotal;
+    return Math.max(0, subtotal - appliedDiscount.amount);
+  };
+
+  const handleCheckout = () => {
+    onClose(); // Close the cart drawer
+    window.location.href = '/checkout/cart-review';
+  };
   return (
     <AnimatePresence>
       {isOpen && (
@@ -83,11 +123,58 @@ const handleCheckout = () => {
             {/* Footer */}
             {cartItems.length > 0 && (
               <div className="border-t border-gray-100 p-4 space-y-4">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-secondary">Subtotal:</span>
-                  <span className="text-lg font-bold text-primary">
-                    ${subtotal.toFixed(2)}
-                  </span>
+{/* Discount Code Input */}
+                <div className="border-t border-gray-200 pt-4">
+                  <div className="space-y-3">
+                    <div className="flex gap-2">
+                      <Input
+                        value={discountCode}
+                        onChange={(e) => setDiscountCode(e.target.value)}
+                        placeholder="Enter discount code"
+                        className="flex-1 text-sm"
+                      />
+                      <Button
+                        size="sm"
+                        onClick={() => applyDiscountCode(discountCode)}
+                        disabled={!discountCode.trim()}
+                        className="px-3"
+                      >
+                        Apply
+                      </Button>
+                    </div>
+                    {appliedDiscount && (
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-success">
+                          Code "{appliedDiscount.code}" applied
+                        </span>
+                        <button
+                          onClick={removeDiscount}
+                          className="text-error hover:text-error/80"
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="border-t border-gray-200 pt-4 space-y-2">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-secondary">Subtotal:</span>
+                    <span className="text-primary">${subtotal.toFixed(2)}</span>
+                  </div>
+                  {appliedDiscount && (
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-success">Discount:</span>
+                      <span className="text-success">-${appliedDiscount.amount.toFixed(2)}</span>
+                    </div>
+                  )}
+                  <div className="flex items-center justify-between font-semibold">
+                    <span className="text-primary">Total:</span>
+                    <span className="text-lg text-primary">
+                      ${getFinalTotal().toFixed(2)}
+                    </span>
+                  </div>
                 </div>
 
                 <div className="space-y-2">

@@ -16,6 +16,7 @@ import Callback from "@/components/pages/Callback";
 import ErrorPage from "@/components/pages/ErrorPage";
 import CheckoutLayout from "@/components/pages/CheckoutLayout";
 import CartReview from "@/components/pages/CartReview";
+import DealsPage from "@/components/pages/DealsPage";
 import ShippingInfo from "@/components/pages/ShippingInfo";
 // Create auth context
 export const AuthContext = createContext(null);
@@ -138,7 +139,8 @@ function AppContent() {
             <Route path="/product/:id" element={<ProductDetail />} />
             <Route path="/category/:category" element={<CategoryPage />} />
             <Route path="/search" element={<SearchResults />} />
-            <Route path="/wishlist" element={<WishlistPage />} />
+<Route path="/wishlist" element={<WishlistPage />} />
+            <Route path="/deals" element={<DealsPage />} />
             <Route path="/orders" element={<OrdersPage />} />
           </Route>
           <Route path="/checkout" element={<CheckoutLayout />}>

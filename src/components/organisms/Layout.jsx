@@ -1,8 +1,9 @@
-import React from "react"
-import { Outlet } from "react-router-dom"
-import Header from "@/components/organisms/Header"
-import CartDrawer from "@/components/organisms/CartDrawer"
-import { useCart } from "@/hooks/useCart"
+import React from "react";
+import { Outlet } from "react-router-dom";
+import { useCart } from "@/hooks/useCart";
+import Header from "@/components/organisms/Header";
+import CartDrawer from "@/components/organisms/CartDrawer";
+import PromotionBanner from '@/components/molecules/PromotionBanner';
 
 const Layout = () => {
   const {
@@ -16,17 +17,19 @@ const Layout = () => {
     isDrawerOpen,
     openDrawer,
     closeDrawer
-  } = useCart()
-const handleSearch = async (query) => {
+  } = useCart();
+
+  const handleSearch = async (query) => {
     // This function is now handled by SearchBar component directly
     // but kept for backwards compatibility
     if (query && query.trim()) {
-      window.location.href = `/search?q=${encodeURIComponent(query.trim())}`
+      window.location.href = `/search?q=${encodeURIComponent(query.trim())}`;
     }
-  }
+  };
 
   return (
-<div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background">
+      <PromotionBanner />
       <Header
         cartItemCount={getItemCount()}
         onCartClick={openDrawer}
@@ -47,7 +50,7 @@ const handleSearch = async (query) => {
         subtotal={getSubtotal()}
       />
     </div>
-  )
-}
+);
+};
 
 export default Layout

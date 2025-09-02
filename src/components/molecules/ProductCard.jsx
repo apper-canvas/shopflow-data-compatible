@@ -26,7 +26,7 @@ if (product.inStock && onAddToCart) {
     )}>
 <div className="relative">
         <img
-src={product.image}
+          src={product.image}
           alt={product.title}
           className="w-full h-64 object-cover"
           loading="lazy"
@@ -42,6 +42,15 @@ src={product.image}
           </div>
         </div>
 
+        {/* Sale Badge */}
+        {product.promotion && (
+          <div className="absolute top-3 left-3 z-10">
+            <div className="bg-error text-white px-2 py-1 rounded-md text-xs font-bold shadow-md">
+              {Math.round(product.promotion.discount_percentage_c)}% OFF
+            </div>
+          </div>
+        )}
+
         {/* Heart button in top-right corner */}
         <div className="absolute top-3 right-3">
           <HeartButton
@@ -51,7 +60,7 @@ src={product.image}
           />
         </div>
 
-{!product.inStock && (
+        {!product.inStock && (
           <div className="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center">
             <span className="bg-surface text-primary px-3 py-1 rounded-full text-sm font-medium">
               Out of Stock
@@ -96,10 +105,28 @@ src={product.image}
           {product.description}
         </p>
         
-        <div className="flex items-center justify-between">
-          <span className="text-lg font-bold text-primary">
-            ${product.price.toFixed(2)}
-          </span>
+<div className="flex items-center justify-between">
+          <div className="flex flex-col">
+            {product.promotion && product.promotionalPrice ? (
+              <>
+                <div className="flex items-center gap-2">
+                  <span className="text-lg font-bold text-error">
+                    ${product.promotionalPrice.toFixed(2)}
+                  </span>
+                  <span className="text-sm text-secondary line-through">
+                    ${product.originalPrice.toFixed(2)}
+                  </span>
+                </div>
+                <div className="text-xs text-success font-medium">
+                  Save ${(product.originalPrice - product.promotionalPrice).toFixed(2)}
+                </div>
+              </>
+            ) : (
+              <span className="text-lg font-bold text-primary">
+                ${product.price.toFixed(2)}
+              </span>
+            )}
+          </div>
           
           <Button
             onClick={handleAddToCart}

@@ -30,6 +30,12 @@ const Header = ({ cartItemCount, onCartClick, onSearch }) => {
             >
               Home
             </Link>
+<Link
+              to="/deals"
+              className="text-secondary hover:text-primary transition-colors font-medium"
+            >
+              Deals
+            </Link>
             
             {/* Categories Dropdown */}
             <div className="relative group">

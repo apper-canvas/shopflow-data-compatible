@@ -15,9 +15,12 @@ class CheckoutService {
 
       const params = {
         records: [{
-          user_id_c: sessionData.userId,
+user_id_c: sessionData.userId,
           cart_data_c: JSON.stringify(sessionData.cartData),
           subtotal_c: sessionData.subtotal,
+          discount_amount_c: sessionData.discountAmount || 0,
+          discount_code_c: sessionData.discountCode || '',
+          total_amount_c: sessionData.totalAmount || sessionData.subtotal,
           status_c: sessionData.status || 'cart_review',
           created_date_c: new Date().toISOString()
         }]
@@ -68,9 +71,12 @@ class CheckoutService {
       const params = {
         fields: [
           {"field": {"Name": "Id"}},
-          {"field": {"Name": "user_id_c"}},
+{"field": {"Name": "user_id_c"}},
           {"field": {"Name": "cart_data_c"}},
           {"field": {"Name": "subtotal_c"}},
+          {"field": {"Name": "discount_amount_c"}},
+          {"field": {"Name": "discount_code_c"}},
+          {"field": {"Name": "total_amount_c"}},
           {"field": {"Name": "status_c"}},
           {"field": {"Name": "created_date_c"}}
         ]
@@ -100,7 +106,8 @@ class CheckoutService {
       const params = {
         records: [{
           Id: sessionId,
-          ...updateData
+...updateData,
+          total_amount_c: updateData.totalAmount || updateData.subtotal
         }]
       };
 

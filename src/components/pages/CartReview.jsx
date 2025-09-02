@@ -1,21 +1,44 @@
-import React, { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useSelector, useDispatch } from 'react-redux';
-import { useCart } from '@/hooks/useCart';
-import { setSessionId, setLoading, setError } from '@/store/checkoutSlice';
-import { checkoutService } from '@/services/api/checkoutService';
-import Button from '@/components/atoms/Button';
-import CartItem from '@/components/molecules/CartItem';
-import ApperIcon from '@/components/ApperIcon';
-import Loading from '@/components/ui/Loading';
-import { toast } from 'react-toastify';
+import React, { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+import { useCart } from "@/hooks/useCart";
+import { toast } from "react-toastify";
+import checkoutService from "@/services/api/checkoutService";
+import ApperIcon from "@/components/ApperIcon";
+import CartItem from "@/components/molecules/CartItem";
+import Error from "@/components/ui/Error";
+import Loading from "@/components/ui/Loading";
+import Button from "@/components/atoms/Button";
+import { setError, setLoading, setSessionId } from "@/store/checkoutSlice";
 
 const CartReview = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const { cartItems, updateQuantity, removeFromCart, getSubtotal } = useCart();
-  const { sessionId, loading, error } = useSelector((state) => state.checkout);
+const { cartItems, updateQuantity, removeFromCart, getSubtotal } = useCart();
+  const { sessionId, loading, error, appliedDiscount } = useSelector((state) => state.checkout);
   const { user } = useSelector((state) => state.user);
+
+  // Calculate total savings from promotional prices
+  const getTotalSavings = () => {
+    return cartItems.reduce((total, item) => {
+      const originalPrice = item.product.OriginalPrice || item.product.Price;
+      const currentPrice = item.product.Price;
+      if (originalPrice > currentPrice) {
+        return total + ((originalPrice - currentPrice) * item.quantity);
+      }
+      return total;
+    }, 0);
+  };
+
+  // Calculate final total with discounts
+  const getFinalTotal = () => {
+    let total = getSubtotal();
+    total -= getTotalSavings();
+    if (appliedDiscount) {
+      total -= appliedDiscount.amount;
+    }
+    return Math.max(0, total);
+  };
 
   useEffect(() => {
     // Redirect to home if cart is empty
@@ -106,7 +129,7 @@ const CartReview = () => {
             />
           </div>
         ))}
-      </div>
+</div>
 
       {/* Cart Summary */}
       <div className="bg-surface rounded-lg border border-gray-200 p-6">
@@ -115,10 +138,27 @@ const CartReview = () => {
             <span className="text-secondary">Items ({cartItems.reduce((total, item) => total + item.quantity, 0)})</span>
             <span className="text-primary">${getSubtotal().toFixed(2)}</span>
           </div>
+          
+          {/* Promotional Savings */}
+          {getTotalSavings() > 0 && (
+            <div className="flex justify-between text-sm">
+              <span className="text-success">Promotional Savings:</span>
+              <span className="text-success">-${getTotalSavings().toFixed(2)}</span>
+            </div>
+          )}
+          
+          {/* Applied Discount */}
+          {appliedDiscount && (
+            <div className="flex justify-between text-sm">
+              <span className="text-success">Discount ({appliedDiscount.code}):</span>
+              <span className="text-success">-${appliedDiscount.amount.toFixed(2)}</span>
+            </div>
+          )}
+          
           <div className="border-t border-gray-200 pt-4">
             <div className="flex justify-between font-semibold text-lg">
-              <span className="text-primary">Subtotal</span>
-              <span className="text-primary">${getSubtotal().toFixed(2)}</span>
+              <span className="text-primary">Total</span>
+              <span className="text-primary">${getFinalTotal().toFixed(2)}</span>
             </div>
             <p className="text-sm text-secondary mt-1">
               Shipping and taxes calculated at next step
