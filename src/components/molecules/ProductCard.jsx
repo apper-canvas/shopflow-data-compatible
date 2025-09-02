@@ -5,7 +5,7 @@ import { cn } from "@/utils/cn"
 
 const ProductCard = ({ product, onAddToCart, className }) => {
   const handleAddToCart = () => {
-    if (product.inStock && onAddToCart) {
+if (product.inStock && onAddToCart) {
       onAddToCart(product)
     }
   }
@@ -17,7 +17,7 @@ const ProductCard = ({ product, onAddToCart, className }) => {
     )}>
 <div className="relative">
         <img
-          src={product.image}
+src={product.image}
           alt={product.title}
           className="w-full h-64 object-cover"
           loading="lazy"
@@ -32,7 +32,7 @@ const ProductCard = ({ product, onAddToCart, className }) => {
             <p className="text-gray-500 text-sm">Image not available</p>
           </div>
         </div>
-        {!product.inStock && (
+{!product.inStock && (
           <div className="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center">
             <span className="bg-surface text-primary px-3 py-1 rounded-full text-sm font-medium">
               Out of Stock
@@ -42,22 +42,22 @@ const ProductCard = ({ product, onAddToCart, className }) => {
       </div>
       
       <div className="p-4">
-        <h3 className="font-semibold text-primary mb-2 line-clamp-2">
+<h3 className="font-semibold text-primary mb-2 line-clamp-2">
           {product.title}
         </h3>
         
-        <p className="text-secondary text-sm mb-3 line-clamp-2">
+<p className="text-secondary text-sm mb-3 line-clamp-2">
           {product.description}
         </p>
         
         <div className="flex items-center justify-between">
-          <span className="text-lg font-bold text-primary">
+<span className="text-lg font-bold text-primary">
             ${product.price.toFixed(2)}
           </span>
           
           <Button
             onClick={handleAddToCart}
-            disabled={!product.inStock}
+disabled={!product.inStock}
             size="sm"
             className="min-w-[100px]"
           >

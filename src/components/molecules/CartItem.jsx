@@ -3,7 +3,7 @@ import Button from "@/components/atoms/Button"
 import ApperIcon from "@/components/ApperIcon"
 
 const CartItem = ({ item, onUpdateQuantity, onRemove }) => {
-  const { product, quantity } = item
+const { product, quantity } = item
   const lineTotal = product.price * quantity
 
   const handleQuantityChange = (newQuantity) => {
@@ -20,14 +20,14 @@ const CartItem = ({ item, onUpdateQuantity, onRemove }) => {
 
   return (
     <div className="flex items-center gap-4 py-4 border-b border-gray-100 last:border-b-0">
-      <img
+<img
         src={product.image}
         alt={product.title}
         className="w-16 h-16 object-cover rounded-md"
       />
       
       <div className="flex-1 min-w-0">
-        <h4 className="font-medium text-primary text-sm line-clamp-2">
+<h4 className="font-medium text-primary text-sm line-clamp-2">
           {product.title}
         </h4>
         <p className="text-secondary text-xs">

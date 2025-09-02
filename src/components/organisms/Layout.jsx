@@ -18,8 +18,8 @@ const Layout = () => {
     closeDrawer
   } = useCart()
 
-  const handleSearch = (query) => {
-    // Placeholder for search functionality
+const handleSearch = async (query) => {
+    // TODO: Implement search functionality with product service
     console.log("Search query:", query)
   }
 
