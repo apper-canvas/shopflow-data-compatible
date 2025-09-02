@@ -19,8 +19,11 @@ const Layout = () => {
   } = useCart()
 
 const handleSearch = async (query) => {
-    // TODO: Implement search functionality with product service
-    console.log("Search query:", query)
+    // This function is now handled by SearchBar component directly
+    // but kept for backwards compatibility
+    if (query && query.trim()) {
+      window.location.href = `/search?q=${encodeURIComponent(query.trim())}`
+    }
   }
 
   return (

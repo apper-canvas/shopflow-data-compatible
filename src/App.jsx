@@ -7,6 +7,7 @@ import Layout from "@/components/organisms/Layout";
 import Homepage from "@/components/pages/Homepage";
 import ProductDetail from "@/components/pages/ProductDetail";
 import CategoryPage from "@/components/pages/CategoryPage";
+import SearchResults from "@/components/pages/SearchResults";
 import Login from "@/components/pages/Login";
 import Signup from "@/components/pages/Signup";
 import Callback from "@/components/pages/Callback";
@@ -128,10 +129,11 @@ function AppContent() {
           <Route path="/signup" element={<Signup />} />
           <Route path="/callback" element={<Callback />} />
           <Route path="/error" element={<ErrorPage />} />
-          <Route path="/" element={<Layout />}>
+<Route path="/" element={<Layout />}>
             <Route index element={<Homepage />} />
             <Route path="/product/:id" element={<ProductDetail />} />
             <Route path="/category/:category" element={<CategoryPage />} />
+            <Route path="/search" element={<SearchResults />} />
           </Route>
         </Routes>
         <ToastContainer
