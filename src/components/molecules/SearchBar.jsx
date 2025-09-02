@@ -4,7 +4,7 @@ import Input from "@/components/atoms/Input"
 import Button from "@/components/atoms/Button"
 import ApperIcon from "@/components/ApperIcon"
 import { cn } from "@/utils/cn"
-import productService from "@/services/api/productService"
+import { productService } from "@/services/api/productService"
 
 const SearchBar = ({ onSearch, placeholder = "Search products...", className }) => {
   const [query, setQuery] = useState("")
