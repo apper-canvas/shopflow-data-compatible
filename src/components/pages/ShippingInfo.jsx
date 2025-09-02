@@ -96,7 +96,7 @@ const ShippingInfo = () => {
 
 // Phone number validation (if provided)
 if (formData.phoneNumber && !/^[\d\s\-()+ ]{10,}$/.test(formData.phoneNumber.replace(/\s/g, ''))) {
-      errors.phoneNumber = 'Please enter a valid phone number';
+     errors.phoneNumber = 'Please enter a valid phone number';
     }
 
     dispatch(setValidationErrors(errors));
