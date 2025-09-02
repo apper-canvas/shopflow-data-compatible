@@ -41,23 +41,50 @@ src={product.image}
         )}
       </div>
       
-      <div className="p-4">
-<h3 className="font-semibold text-primary mb-2 line-clamp-2">
-          {product.title}
+<div className="p-4">
+        <h3 className="font-semibold text-primary mb-2 line-clamp-2 hover:text-primary/80 cursor-pointer">
+          <a href={`/product/${product.Id}`}>
+            {product.title}
+          </a>
         </h3>
         
-<p className="text-secondary text-sm mb-3 line-clamp-2">
+        {/* Rating and Reviews */}
+        {product.averageRating > 0 && (
+          <div className="flex items-center gap-2 mb-2">
+            <div className="flex items-center">
+              {[...Array(5)].map((_, index) => (
+                <ApperIcon
+                  key={index}
+                  name="Star"
+                  size={12}
+                  className={`${
+                    index < Math.floor(product.averageRating)
+                      ? "text-warning fill-warning"
+                      : index < product.averageRating
+                      ? "text-warning fill-warning opacity-50"
+                      : "text-gray-300"
+                  }`}
+                />
+              ))}
+            </div>
+            <span className="text-xs text-secondary">
+              ({product.reviewCount || 0} review{(product.reviewCount || 0) !== 1 ? 's' : ''})
+            </span>
+          </div>
+        )}
+        
+        <p className="text-secondary text-sm mb-3 line-clamp-2">
           {product.description}
         </p>
         
         <div className="flex items-center justify-between">
-<span className="text-lg font-bold text-primary">
+          <span className="text-lg font-bold text-primary">
             ${product.price.toFixed(2)}
           </span>
           
           <Button
             onClick={handleAddToCart}
-disabled={!product.inStock}
+            disabled={!product.inStock}
             size="sm"
             className="min-w-[100px]"
           >
