@@ -4,7 +4,276 @@ class ProductService {
   }
 
 initializeClient() {
-    // Initialize client logic here
+    if (!this.apperClient) {
+      const { ApperClient } = window.ApperSDK;
+      this.apperClient = new ApperClient({
+        apperProjectId: import.meta.env.VITE_APPER_PROJECT_ID,
+        apperPublicKey: import.meta.env.VITE_APPER_PUBLIC_KEY
+      });
+    }
+  }
+
+  async getAll(filters = {}) {
+    try {
+      if (!this.apperClient) this.initializeClient();
+      
+      const params = {
+        fields: [
+          {"field": {"Name": "Name"}},
+          {"field": {"Name": "title_c"}},
+          {"field": {"Name": "price_c"}},
+          {"field": {"Name": "image_c"}},
+          {"field": {"Name": "description_c"}},
+          {"field": {"Name": "category_c"}},
+          {"field": {"Name": "in_stock_c"}},
+          {"field": {"Name": "discount_percentage_c"}},
+          {"field": {"Name": "is_on_sale_c"}},
+          {"field": {"Name": "Tags"}},
+          {"field": {"Name": "CreatedOn"}}
+        ],
+        pagingInfo: { limit: filters.limit || 50, offset: filters.offset || 0 }
+      };
+
+      if (filters.category) {
+        params.where = [{"FieldName": "category_c", "Operator": "ExactMatch", "Values": [filters.category]}];
+      }
+
+      if (filters.search) {
+        params.whereGroups = [{
+          operator: "OR",
+          subGroups: [{
+            conditions: [
+              {"fieldName": "title_c", "operator": "Contains", "values": [filters.search]},
+              {"fieldName": "description_c", "operator": "Contains", "values": [filters.search]}
+            ]
+          }]
+        }];
+      }
+
+      if (filters.orderBy) {
+        params.orderBy = [{"fieldName": filters.orderBy, "sorttype": filters.sortDirection || "ASC"}];
+      }
+
+      const response = await this.apperClient.fetchRecords("product_c", params);
+
+      if (!response.success) {
+        console.error("Error fetching products:", response.message);
+        throw new Error(response.message);
+      }
+
+      return (response.data || []).map(item => ({
+        Id: item.Id,
+        title: item.title_c || item.Name,
+        price: parseFloat(item.price_c || 0),
+        image: item.image_c,
+        description: item.description_c,
+        category: item.category_c,
+        inStock: Boolean(item.in_stock_c),
+        discountPercentage: parseFloat(item.discount_percentage_c || 0),
+        isOnSale: Boolean(item.is_on_sale_c),
+        tags: item.Tags,
+        createdOn: item.CreatedOn
+      }));
+
+    } catch (error) {
+      console.error("Error fetching products:", error?.response?.data?.message || error);
+      throw new Error("Failed to load products");
+    }
+  }
+
+  async getById(id) {
+    try {
+      if (!this.apperClient) this.initializeClient();
+      
+      const params = {
+        fields: [
+          {"field": {"Name": "Name"}},
+          {"field": {"Name": "title_c"}},
+          {"field": {"Name": "price_c"}},
+          {"field": {"Name": "image_c"}},
+          {"field": {"Name": "description_c"}},
+          {"field": {"Name": "category_c"}},
+          {"field": {"Name": "in_stock_c"}},
+          {"field": {"Name": "discount_percentage_c"}},
+          {"field": {"Name": "is_on_sale_c"}},
+          {"field": {"Name": "Tags"}},
+          {"field": {"Name": "CreatedOn"}},
+          {"field": {"Name": "ModifiedOn"}}
+        ]
+      };
+
+      const response = await this.apperClient.getRecordById("product_c", parseInt(id), params);
+
+      if (!response.success) {
+        console.error("Error fetching product:", response.message);
+        throw new Error(response.message);
+      }
+
+      if (!response.data) {
+        throw new Error("Product not found");
+      }
+
+      const item = response.data;
+      return {
+        Id: item.Id,
+        title: item.title_c || item.Name,
+        price: parseFloat(item.price_c || 0),
+        image: item.image_c,
+        description: item.description_c,
+        category: item.category_c,
+        inStock: Boolean(item.in_stock_c),
+        discountPercentage: parseFloat(item.discount_percentage_c || 0),
+        isOnSale: Boolean(item.is_on_sale_c),
+        tags: item.Tags,
+        createdOn: item.CreatedOn,
+        modifiedOn: item.ModifiedOn
+      };
+
+    } catch (error) {
+      console.error("Error fetching product:", error?.response?.data?.message || error);
+      throw new Error("Failed to load product details");
+    }
+  }
+
+  async create(productData) {
+    try {
+      if (!this.apperClient) this.initializeClient();
+      
+      // Only include Updateable fields
+      const params = {
+        records: [{
+          Name: productData.title || productData.Name,
+          title_c: productData.title,
+          price_c: parseFloat(productData.price || 0),
+          image_c: productData.image,
+          description_c: productData.description,
+          category_c: productData.category,
+          in_stock_c: Boolean(productData.inStock),
+          discount_percentage_c: parseFloat(productData.discountPercentage || 0),
+          is_on_sale_c: Boolean(productData.isOnSale),
+          Tags: productData.tags
+        }]
+      };
+
+      const response = await this.apperClient.createRecord("product_c", params);
+
+      if (!response.success) {
+        console.error("Error creating product:", response.message);
+        throw new Error(response.message);
+      }
+
+      if (response.results && response.results.length > 0) {
+        const successful = response.results.filter(r => r.success);
+        const failed = response.results.filter(r => !r.success);
+        
+        if (failed.length > 0) {
+          console.error(`Failed to create ${failed.length} products:`, failed);
+          failed.forEach(record => {
+            if (record.message) throw new Error(record.message);
+          });
+        }
+        
+        if (successful.length > 0) {
+          return successful[0].data;
+        }
+      }
+
+      throw new Error("Product creation failed");
+
+    } catch (error) {
+      console.error("Error creating product:", error?.response?.data?.message || error);
+      throw new Error("Failed to create product");
+    }
+  }
+
+  async update(id, productData) {
+    try {
+      if (!this.apperClient) this.initializeClient();
+      
+      // Only include Updateable fields
+      const params = {
+        records: [{
+          Id: parseInt(id),
+          Name: productData.title || productData.Name,
+          title_c: productData.title,
+          price_c: parseFloat(productData.price || 0),
+          image_c: productData.image,
+          description_c: productData.description,
+          category_c: productData.category,
+          in_stock_c: Boolean(productData.inStock),
+          discount_percentage_c: parseFloat(productData.discountPercentage || 0),
+          is_on_sale_c: Boolean(productData.isOnSale),
+          Tags: productData.tags
+        }]
+      };
+
+      const response = await this.apperClient.updateRecord("product_c", params);
+
+      if (!response.success) {
+        console.error("Error updating product:", response.message);
+        throw new Error(response.message);
+      }
+
+      if (response.results && response.results.length > 0) {
+        const successful = response.results.filter(r => r.success);
+        const failed = response.results.filter(r => !r.success);
+        
+        if (failed.length > 0) {
+          console.error(`Failed to update ${failed.length} products:`, failed);
+          failed.forEach(record => {
+            if (record.message) throw new Error(record.message);
+          });
+        }
+        
+        if (successful.length > 0) {
+          return successful[0].data;
+        }
+      }
+
+      throw new Error("Product update failed");
+
+    } catch (error) {
+      console.error("Error updating product:", error?.response?.data?.message || error);
+      throw new Error("Failed to update product");
+    }
+  }
+
+  async delete(id) {
+    try {
+      if (!this.apperClient) this.initializeClient();
+      
+      const params = { 
+        RecordIds: [parseInt(id)]
+      };
+
+      const response = await this.apperClient.deleteRecord("product_c", params);
+
+      if (!response.success) {
+        console.error("Error deleting product:", response.message);
+        throw new Error(response.message);
+      }
+
+      if (response.results && response.results.length > 0) {
+        const successful = response.results.filter(r => r.success);
+        const failed = response.results.filter(r => !r.success);
+        
+        if (failed.length > 0) {
+          console.error(`Failed to delete ${failed.length} products:`, failed);
+          failed.forEach(record => {
+            if (record.message) throw new Error(record.message);
+          });
+          return false;
+        }
+        
+        return successful.length > 0;
+      }
+
+      return true;
+
+    } catch (error) {
+      console.error("Error deleting product:", error?.response?.data?.message || error);
+      throw new Error("Failed to delete product");
+    }
   }
 
   async getFeatured(limit = 12) {
@@ -156,7 +425,6 @@ initializeClient() {
       throw new Error("Failed to load featured products")
     }
   }
-
   async getReviewStatsForProducts(productIds) {
     try {
       if (!this.apperClient) this.initializeClient();
