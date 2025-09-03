@@ -1,4 +1,5 @@
 import React from "react"
+import { Link } from "react-router-dom"
 import Button from "@/components/atoms/Button"
 import ApperIcon from "@/components/ApperIcon"
 import HeartButton from "@/components/molecules/HeartButton"
@@ -70,10 +71,10 @@ if (product.inStock && onAddToCart) {
       </div>
       
 <div className="p-4">
-        <h3 className="font-semibold text-primary mb-2 line-clamp-2 hover:text-primary/80 cursor-pointer">
-          <a href={`/product/${product.Id}`}>
+<h3 className="font-semibold text-primary mb-2 line-clamp-2 hover:text-primary/80 cursor-pointer">
+          <Link to={`/product/${product.Id}`}>
             {product.title}
-          </a>
+          </Link>
         </h3>
         
         {/* Rating and Reviews */}
