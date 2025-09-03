@@ -143,7 +143,7 @@ const getSubtotal = () => {
   const openDrawer = () => setIsDrawerOpen(true)
   const closeDrawer = () => setIsDrawerOpen(false)
 
-  return {
+return {
     cartItems,
     addToCart,
     removeFromCart,
@@ -151,6 +151,14 @@ const getSubtotal = () => {
     clearCart,
     getItemCount,
     getSubtotal,
+    getOriginalSubtotal,
+    getTotalSavings,
+    getFinalTotal,
+    appliedDiscount,
+    discountCode,
+    setDiscountCode,
+    applyDiscountCode,
+    removeDiscount,
     isDrawerOpen,
     openDrawer,
     closeDrawer
