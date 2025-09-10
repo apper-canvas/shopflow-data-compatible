@@ -1,10 +1,10 @@
-import { useEffect, useContext } from 'react';
-import { Link } from 'react-router-dom';
-import { AuthContext } from '../../App';
+import { useEffect, useContext } from "react";
+import { Link } from "react-router-dom";
+import { useAuth } from "@/context/Auth";
 
 function Login() {
-  const { isInitialized } = useContext(AuthContext);
-  
+  const { isInitialized } = useAuth();
+
   useEffect(() => {
     if (isInitialized) {
       // Show login UI in this component
@@ -12,7 +12,7 @@ function Login() {
       ApperUI.showLogin("#authentication");
     }
   }, [isInitialized]);
-  
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-surface-50 dark:bg-surface-900">
       <div className="w-full max-w-md space-y-8 p-8 bg-white dark:bg-surface-800 rounded-lg shadow-md">
@@ -32,8 +32,11 @@ function Login() {
         <div id="authentication" />
         <div className="text-center mt-4">
           <p className="text-sm text-surface-600 dark:text-surface-400">
-            Don't have an account?{' '}
-            <Link to="/signup" className="font-medium text-primary hover:text-accent">
+            Don't have an account?{" "}
+            <Link
+              to="/signup"
+              className="font-medium text-primary hover:text-accent"
+            >
               Sign up
             </Link>
           </p>

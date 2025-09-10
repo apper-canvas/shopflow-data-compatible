@@ -3,7 +3,7 @@ import { Outlet } from "react-router-dom";
 import { useCart } from "@/hooks/useCart";
 import Header from "@/components/organisms/Header";
 import CartDrawer from "@/components/organisms/CartDrawer";
-import PromotionBanner from '@/components/molecules/PromotionBanner';
+import PromotionBanner from "@/components/molecules/PromotionBanner";
 
 const Layout = () => {
   const {
@@ -16,7 +16,7 @@ const Layout = () => {
     getSubtotal,
     isDrawerOpen,
     openDrawer,
-    closeDrawer
+    closeDrawer,
   } = useCart();
 
   const handleSearch = async (query) => {
@@ -35,8 +35,8 @@ const Layout = () => {
         onCartClick={openDrawer}
         onSearch={handleSearch}
       />
-      
-<main className="flex-1">
+
+      <main className="flex-1">
         <Outlet context={{ addToCart }} />
       </main>
 
@@ -50,7 +50,7 @@ const Layout = () => {
         subtotal={getSubtotal()}
       />
     </div>
-);
+  );
 };
 
-export default Layout
+export default Layout;
