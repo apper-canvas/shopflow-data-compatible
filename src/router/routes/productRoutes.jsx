@@ -11,74 +11,52 @@ const Deals = lazy(() => import("@/components/pages/DealsPage"));
 const Orders = lazy(() => import("@/components/pages/OrdersPage"));
 
 export const productRoutes = [
-  createRoute({
+  {
     path: "/",
-    element: (
-      <Layout>
-        <Home />
-      </Layout>
-    ),
-    title: "Home",
-    requiresAuth: false,
-  }),
-  createRoute({
-    path: "product/:id",
-    element: (
-      <Layout>
-        <ProductDetail />
-      </Layout>
-    ),
-    title: "Product Detail",
-    requiresAuth: true,
-  }),
-  createRoute({
-    path: "category/:category",
-    element: (
-      <Layout>
-        <Category />
-      </Layout>
-    ),
-    title: "Category",
-    requiresAuth: true,
-  }),
-  createRoute({
-    path: "search",
-    element: (
-      <Layout>
-        <SearchResults />
-      </Layout>
-    ),
-    title: "Search Results",
-    requiresAuth: true,
-  }),
-  createRoute({
-    path: "wishlist",
-    element: (
-      <Layout>
-        <Wishlist />
-      </Layout>
-    ),
-    title: "Wishlist",
-    requiresAuth: true,
-  }),
-  createRoute({
-    path: "deals",
-    element: (
-      <Layout>
-        <Deals />
-      </Layout>
-    ),
-    title: "Deals",
-    requiresAuth: true,
-  }),
-  createRoute({
-    path: "orders",
-    element: (
-      <Layout>
-        <Orders />
-      </Layout>
-    ),
-    title: "Orders",
-    requiresAuth: true,
-  }),
+    element: <Layout />, // Layout becomes the parent route
+    children: [
+      createRoute({
+        index: true, // This means it's the default child route for "/"
+        element: <Home />,
+        title: "Home",
+        requiresAuth: false,
+      }),
+      createRoute({
+        path: "product/:id",
+        element: <ProductDetail />,
+        title: "Product Detail",
+        requiresAuth: true,
+      }),
+      createRoute({
+        path: "category/:category",
+        element: <Category />,
+        title: "Category",
+        requiresAuth: true,
+      }),
+      createRoute({
+        path: "search",
+        element: <SearchResults />,
+        title: "Search Results",
+        requiresAuth: true,
+      }),
+      createRoute({
+        path: "wishlist",
+        element: <Wishlist />,
+        title: "Wishlist",
+        requiresAuth: true,
+      }),
+      createRoute({
+        path: "deals",
+        element: <Deals />,
+        title: "Deals",
+        requiresAuth: true,
+      }),
+      createRoute({
+        path: "orders",
+        element: <Orders />,
+        title: "Orders",
+        requiresAuth: true,
+      }),
+    ],
+  },
 ];

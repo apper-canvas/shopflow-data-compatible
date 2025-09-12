@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
-import { setUser, clearUser } from "@/store/userSlice";
+import { setUser, clearUser, setInitialized } from "@/store/userSlice";
 
 const AuthContext = createContext(null);
 
@@ -21,6 +21,14 @@ const AuthProvider = ({ children }) => {
 
   // Initialize ApperUI once when the app loads
   useEffect(() => {
+    // Check if ApperSDK is loaded
+    if (!window.ApperSDK) {
+      console.error("❌ ApperSDK not loaded - check your environment configuration");
+      setIsInitialized(true); // Local state
+      dispatch(setInitialized(true)); // Redux state for guards
+      return;
+    }
+
     const { ApperClient, ApperUI } = window.ApperSDK;
 
     const client = new ApperClient({
@@ -34,70 +42,55 @@ const AuthProvider = ({ children }) => {
       clientId: import.meta.env.VITE_APPER_PROJECT_ID,
       view: "both",
       onSuccess: function (user) {
-        setIsInitialized(true);
-        // CRITICAL: This exact currentPath logic must be preserved in all implementations
-        // DO NOT simplify or modify this pattern as it ensures proper redirection flow
-        let currentPath = window.location.pathname + window.location.search;
-        let redirectPath = new URLSearchParams(window.location.search).get(
-          "redirect"
-        );
-        const isAuthPage =
-          currentPath.includes("/login") ||
-          currentPath.includes("/signup") ||
-          currentPath.includes("/callback") ||
-          currentPath.includes("/error");
-
+        console.log("🔧 Auth onSuccess called:", { user: !!user, currentURL: window.location.href });
+        
+        setIsInitialized(true); // Local state
+        dispatch(setInitialized(true)); // Redux state for guards
+        
+        // Get redirect parameter from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const redirectPath = urlParams.get("redirect");
+        
+        console.log("🔧 Redirect analysis:", { redirectPath, currentPath: window.location.pathname });
+        
+        // Store user information in Redux FIRST
         if (user) {
-          // User is authenticated
-          if (redirectPath) {
-            navigate(redirectPath);
-          } else if (!isAuthPage) {
-            if (
-              !currentPath.includes("/login") &&
-              !currentPath.includes("/signup")
-            ) {
-              navigate(currentPath);
-            } else {
-              navigate("/");
-            }
-          } else {
-            navigate("/");
-          }
-          // Store user information in Redux
           dispatch(setUser(JSON.parse(JSON.stringify(user))));
-        } else {
-          // User is not authenticated
-          if (!isAuthPage) {
-            navigate(
-              currentPath.includes("/signup")
-                ? `/signup?redirect=${currentPath}`
-                : currentPath.includes("/login")
-                ? `/login?redirect=${currentPath}`
-                : "/login"
-            );
-          } else if (redirectPath) {
-            if (
-              !["error", "signup", "login", "callback"].some((path) =>
-                currentPath.includes(path)
-              )
-            ) {
-              navigate(`/login?redirect=${redirectPath}`);
-            } else {
-              navigate(currentPath);
-            }
-          } else if (isAuthPage) {
-            navigate(currentPath);
+          console.log("🔧 User stored in Redux, navigating...");
+          
+          // Navigate based on redirect parameter
+          if (redirectPath) {
+            console.log("🔧 Navigating to redirect path:", redirectPath);
+            navigate(redirectPath);
           } else {
-            navigate("/login");
+            // If no redirect, go to home (only from auth pages)
+            const isOnAuthPage = ["/login", "/signup", "/callback"].some(page => 
+              window.location.pathname.includes(page)
+            );
+            if (isOnAuthPage) {
+              console.log("🔧 On auth page, navigating to home");
+              navigate("/");
+            } else {
+              console.log("🔧 Already on correct page, staying put");
+            }
           }
+        } else {
           dispatch(clearUser());
+          console.log("🔧 No user, redirecting to login");
+          // Only redirect if not already on an auth page
+          if (!window.location.pathname.includes("/login")) {
+            const currentPath = window.location.pathname + window.location.search;
+            navigate(`/login?redirect=${encodeURIComponent(currentPath)}`);
+          }
         }
       },
       onError: function (error) {
         console.error("Authentication failed:", error);
+        setIsInitialized(true); // Local state
+        dispatch(setInitialized(true)); // Redux state for guards
       },
     });
-  }, [navigate, dispatch]);
+  }, []); // Remove dependencies to prevent multiple runs
 
   const authMethods = {
     isInitialized,
@@ -114,7 +107,9 @@ const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={authMethods}>{children}</AuthContext.Provider>
+    <AuthContext.Provider value={authMethods}>    
+      {isInitialized ? children : <div>Loading...</div>}
+    </AuthContext.Provider>
   );
 };
 

@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import ApperIcon from "@/components/ApperIcon";
 import CartItem from "@/components/molecules/CartItem";
@@ -14,6 +15,7 @@ const CartDrawer = ({
   onClearCart,
   subtotal = 0 
 }) => {
+  const navigate = useNavigate();
   const [discountCode, setDiscountCode] = useState('');
   const [appliedDiscount, setAppliedDiscount] = useState(null);
 
@@ -57,7 +59,7 @@ const CartDrawer = ({
 
   const handleCheckout = () => {
     onClose(); // Close the cart drawer
-    window.location.href = '/checkout/cart-review';
+    navigate('/checkout/cart-review');
   };
   return (
     <AnimatePresence>

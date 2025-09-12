@@ -3,7 +3,12 @@ import { store } from "@/store/store";
 
 export const requireAuth = () => {
     const state = store.getState();
-    const user = state.user?.user;
+    const { user, isInitialized } = state.user;
+
+    // Don't redirect until auth system is initialized
+    if (!isInitialized) {
+        return null;
+    }
 
     if (!user) {
         const currentPath = window.location.pathname + window.location.search;
@@ -14,7 +19,12 @@ export const requireAuth = () => {
 
 export const requireGuest = () => {
     const state = store.getState();
-    const user = state.user?.user;
+    const { user, isInitialized } = state.user;
+
+    // Don't redirect until auth system is initialized
+    if (!isInitialized) {
+        return null;
+    }
 
     if (user) {
         throw redirect("/");
