@@ -23,7 +23,6 @@ const AuthProvider = ({ children }) => {
   useEffect(() => {
     // Check if ApperSDK is loaded
     if (!window.ApperSDK) {
-      console.error("❌ ApperSDK not loaded - check your environment configuration");
       setIsInitialized(true); // Local state
       dispatch(setInitialized(true)); // Redux state for guards
       return;
@@ -41,9 +40,7 @@ const AuthProvider = ({ children }) => {
       target: "#authentication",
       clientId: import.meta.env.VITE_APPER_PROJECT_ID,
       view: "both",
-      onSuccess: function (user) {
-        console.log("🔧 Auth onSuccess called:", { user: !!user, currentURL: window.location.href });
-        
+      onSuccess: function (user) {        
         setIsInitialized(true); // Local state
         dispatch(setInitialized(true)); // Redux state for guards
         
@@ -51,16 +48,12 @@ const AuthProvider = ({ children }) => {
         const urlParams = new URLSearchParams(window.location.search);
         const redirectPath = urlParams.get("redirect");
         
-        console.log("🔧 Redirect analysis:", { redirectPath, currentPath: window.location.pathname });
-        
         // Store user information in Redux FIRST
         if (user) {
           dispatch(setUser(JSON.parse(JSON.stringify(user))));
-          console.log("🔧 User stored in Redux, navigating...");
           
           // Navigate based on redirect parameter
           if (redirectPath) {
-            console.log("🔧 Navigating to redirect path:", redirectPath);
             navigate(redirectPath);
           } else {
             // If no redirect, go to home (only from auth pages)
@@ -68,15 +61,12 @@ const AuthProvider = ({ children }) => {
               window.location.pathname.includes(page)
             );
             if (isOnAuthPage) {
-              console.log("🔧 On auth page, navigating to home");
               navigate("/");
-            } else {
-              console.log("🔧 Already on correct page, staying put");
             }
           }
         } else {
           dispatch(clearUser());
-          console.log("🔧 No user, redirecting to login");
+
           // Only redirect if not already on an auth page
           if (!window.location.pathname.includes("/login")) {
             const currentPath = window.location.pathname + window.location.search;
@@ -106,9 +96,19 @@ const AuthProvider = ({ children }) => {
     },
   };
 
+  if (!isInitialized) {
+    return (
+      <div className="loading flex items-center justify-center p-6 h-screen w-full">
+        <svg className="animate-spin" xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M12 2v4"></path><path d="m16.2 7.8 2.9-2.9"></path><path d="M18 12h4"></path><path d="m16.2 16.2 2.9 2.9"></path><path d="M12 18v4"></path><path d="m4.9 19.1 2.9-2.9"></path><path d="M2 12h4"></path><path d="m4.9 4.9 2.9 2.9"></path>
+        </svg>
+      </div>
+    );
+  }
+
   return (
     <AuthContext.Provider value={authMethods}>    
-      {isInitialized ? children : <div>Loading...</div>}
+      {children}
     </AuthContext.Provider>
   );
 };

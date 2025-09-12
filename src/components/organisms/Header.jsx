@@ -1,14 +1,32 @@
-import React from "react"
+import React, { useState } from "react"
 import { Link } from "react-router-dom"
+import { useSelector } from "react-redux"
 import SearchBar from "@/components/molecules/SearchBar"
 import CartIcon from "@/components/molecules/CartIcon"
 import WishlistIcon from "@/components/molecules/WishlistIcon"
 import ApperIcon from "@/components/ApperIcon"
 import { useWishlist } from "@/hooks/useWishlist"
+import { useAuth } from "@/context/Auth"
 
 const Header = ({ cartItemCount, onCartClick, onSearch }) => {
   const { wishlistCount } = useWishlist()
+  const { logout } = useAuth()
+  const { isAuthenticated } = useSelector((state) => state.user)
+  const [isLoggingOut, setIsLoggingOut] = useState(false)
   const categories = ["Electronics", "Clothing", "Home & Kitchen", "Sports", "Accessories"]
+
+  const handleLogout = async () => {
+    if (isLoggingOut) return // Prevent multiple logout attempts
+    
+    setIsLoggingOut(true)
+    try {
+      await logout()
+    } catch (error) {
+      console.error("Logout error:", error)
+    } finally {
+      setIsLoggingOut(false)
+    }
+  }
 
   return (
     <header className="bg-surface shadow-sm border-b border-gray-100 sticky top-0 z-50">
@@ -30,7 +48,7 @@ const Header = ({ cartItemCount, onCartClick, onSearch }) => {
             >
               Home
             </Link>
-<Link
+            <Link
               to="/deals"
               className="text-secondary hover:text-primary transition-colors font-medium"
             >
@@ -60,7 +78,7 @@ const Header = ({ cartItemCount, onCartClick, onSearch }) => {
             </div>
           </nav>
 
-{/* Search & Cart */}
+          {/* Search & Cart */}
           <div className="flex items-center gap-4">
             <div className="hidden sm:block">
               <SearchBar onSearch={onSearch} />
@@ -72,6 +90,8 @@ const Header = ({ cartItemCount, onCartClick, onSearch }) => {
             >
               My Orders
             </Link>
+
+            
             
             <WishlistIcon itemCount={wishlistCount} />
             
@@ -79,6 +99,41 @@ const Header = ({ cartItemCount, onCartClick, onSearch }) => {
               itemCount={cartItemCount}
               onClick={onCartClick}
             />
+
+            {/* Logout Button - visible when authenticated */}
+            {isAuthenticated && (
+              <button
+                onClick={handleLogout}
+                disabled={isLoggingOut}
+                className={`flex items-center gap-1 font-medium transition-colors ${
+                  isLoggingOut
+                    ? "text-gray-400 cursor-not-allowed"
+                    : "text-secondary hover:text-red-600"
+                }`}
+              >
+                {isLoggingOut ? (
+                  <>
+                    <div className="animate-spin w-4 h-4 border-2 border-gray-300 border-t-gray-600 rounded-full"></div>
+                    <span className="hidden sm:block">Logging out...</span>
+                  </>
+                ) : (
+                  <>
+                    <ApperIcon name="LogOut" size={16} />
+                    <span className="hidden sm:block">Logout</span>
+                  </>
+                )}
+              </button>
+            )}
+
+            {/* Login Button - visible when not authenticated */}
+            {!isAuthenticated && (
+              <Link
+                to="/login"
+                className="text-primary hover:text-accent font-medium transition-colors"
+              >
+                Login
+              </Link>
+            )}
           </div>
         </div>
 
