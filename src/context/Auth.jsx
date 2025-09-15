@@ -61,6 +61,7 @@ const AuthProvider = ({ children }) => {
               window.location.pathname.includes(page)
             );
             if (isOnAuthPage) {
+              debugger;
               navigate("/");
             }
           }
@@ -68,10 +69,10 @@ const AuthProvider = ({ children }) => {
           dispatch(clearUser());
 
           // Only redirect if not already on an auth page
-          if (!window.location.pathname.includes("/login")) {
-            const currentPath = window.location.pathname + window.location.search;
-            navigate(`/login?redirect=${encodeURIComponent(currentPath)}`);
-          }
+          // if (!window.location.pathname.includes("/login")) {
+          //   const currentPath = window.location.pathname + window.location.search;
+          //   navigate(`/login?redirect=${encodeURIComponent(currentPath)}`);
+          // }
         }
       },
       onError: function (error) {

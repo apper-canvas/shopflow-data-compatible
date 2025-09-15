@@ -1,4 +1,5 @@
 import { lazy } from "react";
+import { Navigate } from "react-router-dom";
 import { createRoute } from "../utils/createRoute";
 
 const Layout = lazy(() => import("@/components/organisms/Layout"));
@@ -10,9 +11,14 @@ const Wishlist = lazy(() => import("@/components/pages/WishlistPage"));
 const Deals = lazy(() => import("@/components/pages/DealsPage"));
 const Orders = lazy(() => import("@/components/pages/OrdersPage"));
 
-export const productRoutes = [
+// Checkout components
+const CheckoutLayout = lazy(() => import("@/components/pages/CheckoutLayout"));
+const CartReview = lazy(() => import("@/components/pages/CartReview"));
+const ShippingInfo = lazy(() => import("@/components/pages/ShippingInfo"));
+
+export const mainRoutes = [
   {
-    path: "/",
+    path: "",
     element: <Layout />, // Layout becomes the parent route
     children: [
       createRoute({
@@ -25,13 +31,13 @@ export const productRoutes = [
         path: "product/:id",
         element: <ProductDetail />,
         title: "Product Detail",
-        requiresAuth: true,
+        requiresAuth: false,
       }),
       createRoute({
         path: "category/:category",
         element: <Category />,
         title: "Category",
-        requiresAuth: true,
+        requiresAuth: false,
       }),
       createRoute({
         path: "search",
@@ -56,6 +62,32 @@ export const productRoutes = [
         element: <Orders />,
         title: "Orders",
         requiresAuth: true,
+      }),
+      // Checkout routes under Layout - Now using enhanced createRoute with children
+      createRoute({
+        path: "checkout",
+        element: <CheckoutLayout />,
+        title: "Checkout",
+        requiresAuth: true,
+        children: [
+          createRoute({
+            index: true,
+            element: <Navigate to="cart-review" replace />,
+            requiresAuth: true,
+          }),
+          createRoute({
+            path: "cart-review",
+            element: <CartReview />,
+            title: "Cart Review",
+            requiresAuth: true,
+          }),
+          createRoute({
+            path: "shipping",
+            element: <ShippingInfo />,
+            title: "Shipping Info",
+            requiresAuth: true,
+          }),
+        ],
       }),
     ],
   },

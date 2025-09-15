@@ -1,9 +1,7 @@
 import { createBrowserRouter } from "react-router-dom";
 import Root from "@/layouts/Root";
 import { authRoutes } from "./routes/authRoutes";
-import { productRoutes } from "./routes/productRoutes";
-import { checkoutRoutes } from "./routes/checkoutRoutes";
-import { publicRoutes } from "./routes/publicRoutes";
+import { mainRoutes } from "./routes/mainRoutes";
 
 const routes = [
   {
@@ -11,9 +9,7 @@ const routes = [
     element: <Root />,
     children: [
       ...authRoutes,
-      ...productRoutes,
-      ...checkoutRoutes,
-      ...publicRoutes,
+      ...mainRoutes
     ],
   },
 ];

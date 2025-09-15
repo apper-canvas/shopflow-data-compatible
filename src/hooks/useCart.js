@@ -6,6 +6,7 @@ const STORAGE_KEY = "shopflow_cart"
 export const useCart = () => {
   const [cartItems, setCartItems] = useState([])
   const [isDrawerOpen, setIsDrawerOpen] = useState(false)
+  const [isCartLoading, setIsCartLoading] = useState(true)
 
   useEffect(() => {
     const savedCart = localStorage.getItem(STORAGE_KEY)
@@ -18,16 +19,19 @@ export const useCart = () => {
         localStorage.removeItem(STORAGE_KEY)
       }
     }
+    setIsCartLoading(false) // Mark cart as loaded
   }, [])
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(cartItems))
+    if (cartItems.length > 0) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(cartItems))
+    }
   }, [cartItems])
 
   const addToCart = (product) => {
     setCartItems(prev => {
       const existingItem = prev.find(item => item.product.Id === product.Id)
-      
+
       if (existingItem) {
         toast.success(`Increased quantity of ${product.title}`)
         return prev.map(item =>
@@ -62,7 +66,7 @@ export const useCart = () => {
       return
     }
 
-    setCartItems(prev => 
+    setCartItems(prev =>
       prev.map(item =>
         item.product.Id === productId
           ? { ...item, quantity: Math.max(1, quantity) }
@@ -80,7 +84,7 @@ export const useCart = () => {
     return cartItems.reduce((total, item) => total + item.quantity, 0)
   }
 
-const getSubtotal = () => {
+  const getSubtotal = () => {
     return cartItems.reduce((total, item) => {
       const price = item.product.promotionalPrice || item.product.price;
       return total + (price * item.quantity);
@@ -88,7 +92,7 @@ const getSubtotal = () => {
   };
 
   const getOriginalSubtotal = () => {
-    return cartItems.reduce((total, item) => 
+    return cartItems.reduce((total, item) =>
       total + (item.product.originalPrice || item.product.price) * item.quantity, 0
     );
   };
@@ -108,7 +112,7 @@ const getSubtotal = () => {
       const { discountCodeService } = await import('@/services/api/discountCodeService');
       const subtotal = getSubtotal();
       const validation = await discountCodeService.validateCode(code, subtotal);
-      
+
       if (validation.isValid) {
         setAppliedDiscount({
           code: code,
@@ -143,8 +147,9 @@ const getSubtotal = () => {
   const openDrawer = () => setIsDrawerOpen(true)
   const closeDrawer = () => setIsDrawerOpen(false)
 
-return {
+  return {
     cartItems,
+    isCartLoading,
     addToCart,
     removeFromCart,
     updateQuantity,

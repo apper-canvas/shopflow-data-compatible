@@ -5,19 +5,16 @@ export const requireAuth = () => {
     const state = store.getState();
     const { user, isInitialized } = state.user;
 
-    // Don't redirect until auth system is initialized
-    if (!isInitialized) {
-        return null;
-    }
-
-    if (!user) {
+    if (!isInitialized || !user) {
+        console.log('🔒 requireAuth: Redirecting to login');
         const currentPath = window.location.pathname + window.location.search;
         throw redirect(`/login?redirect=${encodeURIComponent(currentPath)}`);
     }
+
     return null;
 };
 
-export const requireGuest = () => {
+/*export const requireGuest = () => {
     const state = store.getState();
     const { user, isInitialized } = state.user;
 
@@ -30,4 +27,4 @@ export const requireGuest = () => {
         throw redirect("/");
     }
     return null;
-};
+};*/
