@@ -2,7 +2,8 @@ import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { useEffect } from "react";
 import AuthProvider from "@/context/Auth";
-import { getRouteConfig } from "@/config/routes.config";
+import { getRouteConfig } from "@/router/routes.config";
+import { checkAccess } from "@/router/guards";
 
 export default function Root() {
   const { isInitialized, user } = useSelector(state => state.user);
@@ -58,48 +59,4 @@ export default function Root() {
   );
 }
 
-// Same access check logic as guards
-function checkAccess(accessType, user) {
-  switch (accessType) {
-    case "public":
-      return { allowed: true };
-
-    case "authenticated":
-      return {
-        allowed: !!user,
-        redirectTo: user ? null : "/login"
-      };
-
-    default:
-      // Handle role-based access like "role:admin"
-      if (accessType.startsWith("role:")) {
-        const role = accessType.split(":")[1];
-        const userRoles = user?.roles || [];
-        const hasRole = userRoles.includes(role);
-        return {
-          allowed: !!user && hasRole,
-          redirectTo: user ? "/error?message=insufficient_permissions" : "/login"
-        };
-      }
-
-      // Handle plan-based access like "plan:premium"
-      if (accessType.startsWith("plan:")) {
-        const plan = accessType.split(":")[1];
-        const userPlan = user?.plan || "free";
-        const hasCorrectPlan = userPlan === plan;
-        return {
-          allowed: !!user && hasCorrectPlan,
-          redirectTo: user ? "/upgrade" : "/login"
-        };
-      }
-
-      // Handle owner access
-      if (accessType === "owner") {
-        return { allowed: !!user, redirectTo: "/login" };
-      }
-
-      // Default to requiring authentication for unknown types
-      return { allowed: !!user, redirectTo: "/login" };
-  }
-}
 

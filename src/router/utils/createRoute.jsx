@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import { getRouteConfig } from "@/config/routes.config";
+import { getRouteConfig } from "@/router/routes.config";
 
 export const createRoute = ({
     path,

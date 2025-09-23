@@ -1,5 +1,5 @@
 import { lazy } from "react";
-import { Navigate } from "react-router-dom";
+import { Navigate, Outlet } from "react-router-dom";
 import { createRoute } from "../utils/createRoute";
 
 const Layout = lazy(() => import("@/components/organisms/Layout"));
@@ -15,6 +15,7 @@ const Orders = lazy(() => import("@/components/pages/OrdersPage"));
 const CheckoutLayout = lazy(() => import("@/components/pages/CheckoutLayout"));
 const CartReview = lazy(() => import("@/components/pages/CartReview"));
 const ShippingInfo = lazy(() => import("@/components/pages/ShippingInfo"));
+const ManageOrders = lazy(() => import("@/components/pages/ManageOrders"));
 
 export const mainRoutes = [
   {
@@ -79,6 +80,22 @@ export const mainRoutes = [
           }),
         ],
       }),
+      createRoute({
+        path: "admin",
+        element: <Outlet />,
+        // Uses config: access: "authenticated", title: "Checkout"
+        children: [
+          createRoute({
+            index: true,
+            element: <Navigate to="manage-orders" replace />
+          }),
+          createRoute({
+            path: "manage-orders",
+            element: <ManageOrders />,
+            // Uses config: access: "authenticated" from "/checkout/*" pattern
+          }),
+        ]
+      })
     ],
   },
 ];

@@ -46,6 +46,7 @@ const AuthProvider = ({ children }) => {
       clientId: import.meta.env.VITE_APPER_PROJECT_ID,
       view: "both",
       onSuccess: function (user) {
+        user["roles"] = ["employee"];
         console.log('✅ ApperUI onSuccess called with user:', user);
         setIsInitialized(true); // Local state
         dispatch(setInitialized(true)); // Redux state for guards

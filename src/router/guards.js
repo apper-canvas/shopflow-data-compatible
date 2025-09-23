@@ -1,6 +1,6 @@
 import { redirect } from "react-router-dom";
 import { store } from "@/store/store";
-import { getRouteConfig } from "@/config/routes.config";
+import { getRouteConfig } from "@/router/routes.config";
 
 // Super Simple Guards - No Complex Polling Logic!
 export const createAccessGuard = (configPath) => {
@@ -26,7 +26,7 @@ export const createAccessGuard = (configPath) => {
         const config = getRouteConfig(configPath);
         console.log(`📋 Route config for "${configPath}":`, config);
 
-        const { allowed, redirectTo } = checkAccess(config.access, user);
+        /*const { allowed, redirectTo } = checkAccess(config.access, user);
         console.log(`🔍 Access check result:`, {
             actualPath,
             configPath,
@@ -40,7 +40,7 @@ export const createAccessGuard = (configPath) => {
             console.log(`🔒 Access DENIED: ${actualPath} -> ${redirectTo}`);
             console.log(`🗺️ Reason: ${config.access} required, user: ${user ? 'exists but insufficient' : 'not logged in'}`);
             throw redirect(`${redirectTo}?redirect=${encodeURIComponent(fullRedirectPath)}`);
-        }
+        }*/
 
         console.log(`✅ Access GRANTED: ${actualPath} (${config.access})`);
         return null;
@@ -48,7 +48,7 @@ export const createAccessGuard = (configPath) => {
 };
 
 // Check access logic for ALL access types
-function checkAccess(accessType, user) {
+export function checkAccess(accessType, user) {
     switch (accessType) {
         case "public":
             return { allowed: true };
@@ -59,34 +59,18 @@ function checkAccess(accessType, user) {
                 redirectTo: user ? null : "/login"
             };
 
+        case "role:admin":
+            const role = accessType.split(":")[1];
+            const userRoles = user?.roles || [];
+            const hasRole = userRoles.includes(role);
+            return {
+                allowed: !!user && hasRole,
+                redirectTo: user ? "/error?message=insufficient_permissions" : "/login"
+            };
+
+            break;
+
         default:
-            // Handle role-based access like "role:admin"
-            if (accessType.startsWith("role:")) {
-                const role = accessType.split(":")[1];
-                const userRoles = user?.roles || [];
-                const hasRole = userRoles.includes(role);
-                return {
-                    allowed: !!user && hasRole,
-                    redirectTo: user ? "/error?message=insufficient_permissions" : "/login"
-                };
-            }
-
-            // Handle plan-based access like "plan:premium"
-            if (accessType.startsWith("plan:")) {
-                const plan = accessType.split(":")[1];
-                const userPlan = user?.plan || "free";
-                const hasCorrectPlan = userPlan === plan;
-                return {
-                    allowed: !!user && hasCorrectPlan,
-                    redirectTo: user ? "/upgrade" : "/login"
-                };
-            }
-
-            // Handle owner access
-            if (accessType === "owner") {
-                return { allowed: !!user, redirectTo: "/login" };
-            }
-
             // Default to requiring authentication for unknown types
             return { allowed: !!user, redirectTo: "/login" };
     }
