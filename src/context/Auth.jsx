@@ -21,10 +21,15 @@ const AuthProvider = ({ children }) => {
 
   // Initialize ApperUI once when the app loads
   useEffect(() => {
+    console.log('🔧 Auth initialization starting...', { hasApperSDK: !!window.ApperSDK });
+    
     // Check if ApperSDK is loaded
     if (!window.ApperSDK) {
+      console.log('❌ ApperSDK not available - setting unauthenticated state');
+      dispatch(clearUser()); // Ensure user is null
       setIsInitialized(true); // Local state
       dispatch(setInitialized(true)); // Redux state for guards
+      console.log('🔧 Auth state updated: isInitialized=true, user=null');
       return;
     }
 
@@ -40,7 +45,8 @@ const AuthProvider = ({ children }) => {
       target: "#authentication",
       clientId: import.meta.env.VITE_APPER_PROJECT_ID,
       view: "both",
-      onSuccess: function (user) {        
+      onSuccess: function (user) {
+        console.log('✅ ApperUI onSuccess called with user:', user);
         setIsInitialized(true); // Local state
         dispatch(setInitialized(true)); // Redux state for guards
         
@@ -50,35 +56,36 @@ const AuthProvider = ({ children }) => {
         
         // Store user information in Redux FIRST
         if (user) {
+          console.log('💾 Storing user in Redux:', user);
           dispatch(setUser(JSON.parse(JSON.stringify(user))));
+          console.log('🔧 Auth state updated: isInitialized=true, user=SET');
           
-          // Navigate based on redirect parameter
-          if (redirectPath) {
-            navigate(redirectPath);
-          } else {
+           // Navigate based on redirect parameter
+           if (redirectPath) {
+             navigate(redirectPath);
+           } else {
             // If no redirect, go to home (only from auth pages)
             const isOnAuthPage = ["/login", "/signup", "/callback"].some(page => 
               window.location.pathname.includes(page)
             );
             if (isOnAuthPage) {
-              debugger;
               navigate("/");
             }
           }
         } else {
+          console.log('❌ No user provided, clearing user state');
           dispatch(clearUser());
-
-          // Only redirect if not already on an auth page
-          // if (!window.location.pathname.includes("/login")) {
-          //   const currentPath = window.location.pathname + window.location.search;
-          //   navigate(`/login?redirect=${encodeURIComponent(currentPath)}`);
-          // }
+          console.log('🔧 Auth state updated: isInitialized=true, user=null');
+          // Auth context should NOT handle redirects - let route guards handle it
         }
       },
       onError: function (error) {
-        console.error("Authentication failed:", error);
-        setIsInitialized(true); // Local state
-        dispatch(setInitialized(true)); // Redux state for guards
+        console.error('❌ ApperUI onError:', error);
+        dispatch(clearUser());
+        setIsInitialized(true); // Still set initialized even on error
+        dispatch(setInitialized(true));
+        console.log('🔧 Auth state updated (error): isInitialized=true, user=null');
+        // Auth context should NOT handle redirects - let route guards handle it
       },
     });
   }, []); // Remove dependencies to prevent multiple runs
@@ -98,6 +105,7 @@ const AuthProvider = ({ children }) => {
   };
 
   if (!isInitialized) {
+    console.log('⏳ Auth not initialized yet, showing loading...');
     return (
       <div className="loading flex items-center justify-center p-6 h-screen w-full">
         <svg className="animate-spin" xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -107,6 +115,7 @@ const AuthProvider = ({ children }) => {
     );
   }
 
+  console.log('✅ Auth initialized, rendering app...');
   return (
     <AuthContext.Provider value={authMethods}>    
       {children}

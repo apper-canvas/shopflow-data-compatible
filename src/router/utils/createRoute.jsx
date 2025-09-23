@@ -1,22 +1,35 @@
 import { Suspense } from "react";
-import { requireAuth } from "../guard";
+import { getRouteConfig } from "@/config/routes.config";
 
 export const createRoute = ({
     path,
-    index, // Add support for index routes
+    index,
     element,
     title = "Apper",
-    requiresAuth = false, // true = auth required, false = public access
-    children, // Add support for nested children
+    access, // Access type override (public, authenticated, role:admin, etc.)
+    children,
     ...meta
 }) => {
+    // Get config for this route - ensure consistent path format
+    let configPath;
+    if (index) {
+        configPath = "/";
+    } else {
+        // Ensure path starts with "/" for config lookup
+        configPath = path.startsWith('/') ? path : `/${path}`;
+    }
+    
+    const config = getRouteConfig(configPath);
+    const finalAccess = access || config.access;
+    const finalTitle = title !== "Apper" ? title : config.title || title;
+    
+    // No guards needed - all auth logic handled in Root.jsx
     const route = {
-        ...(index ? { index: true } : { path }), // Use index if provided, otherwise use path
+        ...(index ? { index: true } : { path }),
         element: element ? <Suspense fallback={<div>Loading.....</div>}>{element}</Suspense> : element,
-        loader: requiresAuth ? requireAuth : undefined, // ✅ Fixed this line!
         handle: {
-            title,
-            requiresAuth,
+            title: finalTitle,
+            access: finalAccess,
             ...meta,
         },
     };

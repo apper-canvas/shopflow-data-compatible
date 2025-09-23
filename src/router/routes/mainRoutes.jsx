@@ -24,68 +24,58 @@ export const mainRoutes = [
       createRoute({
         index: true, // This means it's the default child route for "/"
         element: <Home />,
-        title: "Home",
-        requiresAuth: false,
+        // Uses config: access: "public", title: "Home"
       }),
       createRoute({
         path: "product/:id",
         element: <ProductDetail />,
-        title: "Product Detail",
-        requiresAuth: false,
+        // Uses config: access: "public", title: "Product Detail"
       }),
       createRoute({
         path: "category/:category",
         element: <Category />,
-        title: "Category",
-        requiresAuth: false,
+        // Uses config: access: "public", title: "Category"
       }),
       createRoute({
         path: "search",
         element: <SearchResults />,
-        title: "Search Results",
-        requiresAuth: true,
+        // Uses config: access: "authenticated", title: "Search Results"
       }),
       createRoute({
         path: "wishlist",
         element: <Wishlist />,
-        title: "Wishlist",
-        requiresAuth: true,
+        // Uses config: access: "authenticated", title: "Wishlist"
       }),
       createRoute({
         path: "deals",
         element: <Deals />,
-        title: "Deals",
-        requiresAuth: true,
+        // Uses config: access: "authenticated", title: "Deals"
       }),
       createRoute({
         path: "orders",
         element: <Orders />,
-        title: "Orders",
-        requiresAuth: true,
+        // Uses config: access: "authenticated", title: "Orders"
       }),
-      // Checkout routes under Layout - Now using enhanced createRoute with children
+      // Checkout routes under Layout
       createRoute({
         path: "checkout",
         element: <CheckoutLayout />,
-        title: "Checkout",
-        requiresAuth: true,
+        // Uses config: access: "authenticated", title: "Checkout"
         children: [
           createRoute({
             index: true,
             element: <Navigate to="cart-review" replace />,
-            requiresAuth: true,
+            access: "authenticated", // Explicit override for redirect
           }),
           createRoute({
             path: "cart-review",
             element: <CartReview />,
-            title: "Cart Review",
-            requiresAuth: true,
+            // Uses config: access: "authenticated" from "/checkout/*" pattern
           }),
           createRoute({
             path: "shipping",
             element: <ShippingInfo />,
-            title: "Shipping Info",
-            requiresAuth: true,
+            // Uses config: access: "authenticated" from "/checkout/*" pattern
           }),
         ],
       }),
