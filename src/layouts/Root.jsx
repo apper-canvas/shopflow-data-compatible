@@ -4,7 +4,7 @@ import { useEffect, useState, createContext, useContext } from "react";
 import { setUser, clearUser, setInitialized } from "@/store/userSlice";
 import { getRouteConfig } from "@/router/routes.config";
 import { checkAccess } from "@/router/guards";
-import { getApperClient } from "@/utils/apperClient";
+import { getApperClient } from "@/services/apperClient";
 
 // Auth context for logout functionality
 const AuthContext = createContext(null);
@@ -35,35 +35,20 @@ export default function Root() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
-  // Local state for initial auth loading
   const [authInitialized, setAuthInitialized] = useState(false);
 
-  // Initialize authentication
   useEffect(() => {
     initializeAuth();
   }, []);
 
-  // Handle route guards after auth is ready
   useEffect(() => {
-    if (isInitialized) {
-      console.log(`🏠 Root: Auth ready, checking access for: ${location.pathname}`);
-      
-      // Get route config for current path
+    if (isInitialized) {      
       const config = getRouteConfig(location.pathname);
-      console.log(`📋 Root: Route config for "${location.pathname}":`, config);
       
-      // Check if user has access
       const { allowed, redirectTo } = checkAccess(config.access, user);
-      console.log(`🔍 Root: Access check result:`, { 
-        path: location.pathname, 
-        access: config.access, 
-        allowed, 
-        hasUser: !!user 
-      });
 
       if (!allowed && redirectTo) {
         const redirectPath = location.pathname + location.search;
-        console.log(`🔒 Root: Redirecting from ${location.pathname} to ${redirectTo}`);
         navigate(`${redirectTo}?redirect=${encodeURIComponent(redirectPath)}`, { replace: true });
       }
     }
@@ -91,7 +76,6 @@ export default function Root() {
         onError: handleAuthError,
       });
 
-      console.log('✅ Authentication initialized successfully');
     } catch (error) {
       console.error('Failed to initialize authentication:', error);
       dispatch(clearUser());
@@ -102,7 +86,7 @@ export default function Root() {
   const handleAuthSuccess = (user) => {
     if (user) {
       // Add admin role to user
-      const userWithRole = { ...user, roles: ["admin"] };
+      const userWithRole = { ...user, roles: ["employee"] };
       dispatch(setUser(userWithRole));
       handleNavigation();
     } else {

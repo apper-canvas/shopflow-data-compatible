@@ -64,10 +64,18 @@ let _singletonInstance = null;
 
 const getSingleton = () => {
     if (!_singletonInstance) {
-        console.log('🏗️ Creating ApperClientSingleton instance (lazy initialization)');
         _singletonInstance = new ApperClientSingleton();
     }
     return _singletonInstance;
 };
 
 export const getApperClient = () => getSingleton().getInstance();
+
+// Export singleton instance getter (lazy)
+export const apperClientSingleton = {
+    getInstance: () => getSingleton().getInstance(),
+    reset: () => getSingleton().reset(),
+    isInitialized: () => getSingleton().isInitialized()
+};
+
+export default getSingleton;

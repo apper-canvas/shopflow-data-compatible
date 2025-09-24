@@ -1,4 +1,4 @@
-import React, { useState } from "react"
+import React, { useState, useEffect, useRef } from "react"
 import { Link } from "react-router-dom"
 import { useSelector } from "react-redux"
 import SearchBar from "@/components/molecules/SearchBar"
@@ -11,9 +11,26 @@ import { useAuth } from "@/layouts/Root"
 const Header = ({ cartItemCount, onCartClick, onSearch }) => {
   const { wishlistCount } = useWishlist()
   const { logout } = useAuth()
-  const { isAuthenticated } = useSelector((state) => state.user)
+  const { isAuthenticated, user } = useSelector((state) => state.user)
   const [isLoggingOut, setIsLoggingOut] = useState(false)
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
+  const userMenuRef = useRef(null)
   const categories = ["Electronics", "Clothing", "Home & Kitchen", "Sports", "Accessories"]
+
+  // Check if user has admin access
+  const hasAdminAccess = user?.roles?.includes("admin") || user?.roles?.includes("employee")
+
+  // Close user menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (userMenuRef.current && !userMenuRef.current.contains(event.target)) {
+        setIsUserMenuOpen(false)
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
 
   const handleLogout = async () => {
     if (isLoggingOut) return // Prevent multiple logout attempts
@@ -84,15 +101,6 @@ const Header = ({ cartItemCount, onCartClick, onSearch }) => {
               <SearchBar onSearch={onSearch} />
             </div>
             
-            <Link
-              to="/orders"
-              className="text-primary hover:text-accent font-medium transition-colors hidden md:block"
-            >
-              My Orders
-            </Link>
-
-            
-            
             <WishlistIcon itemCount={wishlistCount} />
             
             <CartIcon
@@ -100,29 +108,69 @@ const Header = ({ cartItemCount, onCartClick, onSearch }) => {
               onClick={onCartClick}
             />
 
-            {/* Logout Button - visible when authenticated */}
+            {/* User Menu Dropdown - visible when authenticated */}
             {isAuthenticated && (
-              <button
-                onClick={handleLogout}
-                disabled={isLoggingOut}
-                className={`flex items-center gap-1 font-medium transition-colors ${
-                  isLoggingOut
-                    ? "text-gray-400 cursor-not-allowed"
-                    : "text-secondary hover:text-red-600"
-                }`}
-              >
-                {isLoggingOut ? (
-                  <>
-                    <div className="animate-spin w-4 h-4 border-2 border-gray-300 border-t-gray-600 rounded-full"></div>
-                    <span className="hidden sm:block">Logging out...</span>
-                  </>
-                ) : (
-                  <>
-                    <ApperIcon name="LogOut" size={16} />
-                    <span className="hidden sm:block">Logout</span>
-                  </>
+              <div className="relative" ref={userMenuRef}>
+                <button
+                  onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+                  className="flex items-center gap-1 text-secondary hover:text-primary font-medium transition-colors"
+                >
+                  <ApperIcon name="User" size={16} />
+                  <ApperIcon name="ChevronDown" size={12} />
+                </button>
+
+                {/* Dropdown Menu */}
+                {isUserMenuOpen && (
+                  <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-100 py-2 z-50">
+                    <Link
+                      to="/orders"
+                      onClick={() => setIsUserMenuOpen(false)}
+                      className="flex items-center gap-2 px-4 py-2 text-sm text-secondary hover:text-primary hover:bg-gray-50 transition-colors"
+                    >
+                      <ApperIcon name="Package" size={16} />
+                      My Orders
+                    </Link>
+                    
+                    {hasAdminAccess && (
+                      <Link
+                        to="/admin/manage-orders"
+                        onClick={() => setIsUserMenuOpen(false)}
+                        className="flex items-center gap-2 px-4 py-2 text-sm text-secondary hover:text-primary hover:bg-gray-50 transition-colors"
+                      >
+                        <ApperIcon name="Settings" size={16} />
+                        Manage Orders
+                      </Link>
+                    )}
+                    
+                    <hr className="my-1 border-gray-100" />
+                    
+                    <button
+                      onClick={() => {
+                        setIsUserMenuOpen(false)
+                        handleLogout()
+                      }}
+                      disabled={isLoggingOut}
+                      className={`flex items-center gap-2 w-full px-4 py-2 text-sm transition-colors ${
+                        isLoggingOut
+                          ? "text-gray-400 cursor-not-allowed"
+                          : "text-secondary hover:text-red-600 hover:bg-red-50"
+                      }`}
+                    >
+                      {isLoggingOut ? (
+                        <>
+                          <div className="animate-spin w-4 h-4 border-2 border-gray-300 border-t-gray-600 rounded-full"></div>
+                          Logging out...
+                        </>
+                      ) : (
+                        <>
+                          <ApperIcon name="LogOut" size={16} />
+                          Logout
+                        </>
+                      )}
+                    </button>
+                  </div>
                 )}
-              </button>
+              </div>
             )}
 
             {/* Login Button - visible when not authenticated */}

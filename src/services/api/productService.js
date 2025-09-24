@@ -1,4 +1,4 @@
-import { getApperClient } from '@/utils/apperClient';
+import { getApperClient } from '@/services/apperClient';
 
 class ProductService {
   constructor() {

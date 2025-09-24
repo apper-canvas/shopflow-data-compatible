@@ -1,5 +1,5 @@
 import { toast } from "react-toastify";
-import { getApperClient } from '@/utils/apperClient';
+import { getApperClient } from '@/services/apperClient';
 
 class HelpfulnessVoteService {
   constructor() {
