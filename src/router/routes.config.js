@@ -1,31 +1,31 @@
 // Route configuration mapping paths to access types and metadata
 export const routeConfig = {
     // Public routes
-    "/": { access: "public", title: "Home" },
-    "/product/:id": { access: "public", title: "Product Detail" },
-    "/category/:category": { access: "public", title: "Category" },
-    "/login": { access: "public", title: "Login" },
-    "/signup": { access: "public", title: "Sign Up" },
-    "/callback": { access: "public", title: "Callback" },
-    "/error": { access: "public", title: "Error" },
+    "/": { access: "public" },
+    "/product/:id": { access: "public" },
+    "/category/:category": { access: "public" },
+    "/login": { access: "public" },
+    "/signup": { access: "public" },
+    "/callback": { access: "public" },
+    "/error": { access: "public" },
 
     // Authenticated routes
-    "/search": { access: "authenticated", title: "Search Results" },
-    "/wishlist": { access: "authenticated", title: "Wishlist" },
-    "/deals": { access: "authenticated", title: "Deals" },
-    "/orders": { access: "authenticated", title: "Orders" },
+    "/search": { access: "authenticated" },
+    "/wishlist": { access: "authenticated" },
+    "/deals": { access: "authenticated" },
+    "/orders": { access: "authenticated" },
 
     // Checkout process - all require authentication
-    "/checkout": { access: "authenticated", title: "Checkout" },
-    "/checkout/*": { access: "authenticated", title: "Checkout Process" },
+    "/checkout": { access: "authenticated" },
+    "/checkout/*": { access: "authenticated" },
 
     // Admin routes - require admin role
-    "/admin": { access: "role:admin", title: "Admin Panel" },
-    "/admin/*": { access: "role:admin", title: "Admin" },
-    "/admin/**/*": { access: "role:admin", title: "Admin" },
+    "/admin": { access: "role:admin" },
+    "/admin/*": { access: "role:admin" },
+    "/admin/**/*": { access: "role:admin" },
 
     // Premium features - require premium plan
-    "/premium/*": { access: "plan:premium", title: "Premium Features" },
+    "/premium/*": { access: "plan:premium" },
 };
 
 // Get route configuration with pattern matching
@@ -49,7 +49,7 @@ export const getRouteConfig = (path) => {
         }))
         .sort((a, b) => b.specificity - a.specificity);
 
-    return matches[0]?.config || { access: "authenticated", title: "Protected Page" };
+    return matches[0]?.config || { access: "authenticated" };
 };
 
 // Pattern matching logic

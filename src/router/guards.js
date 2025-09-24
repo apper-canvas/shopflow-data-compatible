@@ -2,7 +2,6 @@ import { redirect } from "react-router-dom";
 import { store } from "@/store/store";
 import { getRouteConfig } from "@/router/routes.config";
 
-// Super Simple Guards - No Complex Polling Logic!
 export const createAccessGuard = (configPath) => {
     return ({ request }) => {
         const state = store.getState();
@@ -47,7 +46,6 @@ export const createAccessGuard = (configPath) => {
     };
 };
 
-// Check access logic for ALL access types
 export function checkAccess(accessType, user) {
     switch (accessType) {
         case "public":
