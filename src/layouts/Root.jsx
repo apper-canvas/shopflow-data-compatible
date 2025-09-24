@@ -41,7 +41,8 @@ export default function Root() {
       <div style={{background: 'yellow', padding: '4px', fontSize: '12px'}}>
         Auth: {isInitialized ? 'Ready' : 'Loading'} | User: {user ? 'Logged In' : 'Guest'}
       </div>
-      {isInitialized ? (
+      <Outlet />
+      {/* {isInitialized ? (
         <Outlet />
       ) : (
         <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
@@ -54,7 +55,7 @@ export default function Root() {
             <p className="text-gray-600 text-sm">Please wait while we check your login status</p>
           </div>
         </div>
-      )}
+      )} */}
     </AuthProvider>
   );
 }

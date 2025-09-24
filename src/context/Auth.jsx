@@ -16,115 +16,109 @@ export const useAuth = () => {
 const AuthProvider = ({ children }) => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
-
+  
+  // Local state for Auth component's own loading spinner
   const [isInitialized, setIsInitialized] = useState(false);
 
-  // Initialize ApperUI once when the app loads
   useEffect(() => {
-    console.log('🔧 Auth initialization starting...', { hasApperSDK: !!window.ApperSDK });
-    
-    // Check if ApperSDK is loaded
+    initializeAuth();
+  }, []);
+
+  const initializeAuth = () => {
     if (!window.ApperSDK) {
-      console.log('❌ ApperSDK not available - setting unauthenticated state');
       dispatch(clearUser()); // Ensure user is null
-      setIsInitialized(true); // Local state
-      dispatch(setInitialized(true)); // Redux state for guards
-      console.log('🔧 Auth state updated: isInitialized=true, user=null');
+      handleAuthComplete();
       return;
     }
 
     const { ApperClient, ApperUI } = window.ApperSDK;
-
     const client = new ApperClient({
       apperProjectId: import.meta.env.VITE_APPER_PROJECT_ID,
       apperPublicKey: import.meta.env.VITE_APPER_PUBLIC_KEY,
     });
 
-    // Initialize but don't show login yet
     ApperUI.setup(client, {
       target: "#authentication",
       clientId: import.meta.env.VITE_APPER_PROJECT_ID,
       view: "both",
-      onSuccess: function (user) {
-        if(user){
-          user["roles"] = ["admin"];
-        }
-        
-        console.log('✅ ApperUI onSuccess called with user:', user);
-        setIsInitialized(true); // Local state
-        dispatch(setInitialized(true)); // Redux state for guards
-        
-        // Get redirect parameter from URL
-        const urlParams = new URLSearchParams(window.location.search);
-        const redirectPath = urlParams.get("redirect");
-        
-        // Store user information in Redux FIRST
-        if (user) {
-          console.log('💾 Storing user in Redux:', user);
-          dispatch(setUser(JSON.parse(JSON.stringify(user))));
-          console.log('🔧 Auth state updated: isInitialized=true, user=SET');
-          
-           // Navigate based on redirect parameter
-           if (redirectPath) {
-             navigate(redirectPath);
-           } else {
-            // If no redirect, go to home (only from auth pages)
-            const isOnAuthPage = ["/login", "/signup", "/callback"].some(page => 
-              window.location.pathname.includes(page)
-            );
-            if (isOnAuthPage) {
-              navigate("/");
-            }
-          }
-        } else {
-          console.log('❌ No user provided, clearing user state');
-          dispatch(clearUser());
-          console.log('🔧 Auth state updated: isInitialized=true, user=null');
-          // Auth context should NOT handle redirects - let route guards handle it
-        }
-      },
-      onError: function (error) {
-        console.error('❌ ApperUI onError:', error);
-        dispatch(clearUser());
-        setIsInitialized(true); // Still set initialized even on error
-        dispatch(setInitialized(true));
-        console.log('🔧 Auth state updated (error): isInitialized=true, user=null');
-        // Auth context should NOT handle redirects - let route guards handle it
-      },
+      onSuccess: handleAuthSuccess,
+      onError: handleAuthError,
     });
-  }, []); // Remove dependencies to prevent multiple runs
+  };
 
-  const authMethods = {
-    isInitialized,
-    logout: async () => {
-      try {
-        const { ApperUI } = window.ApperSDK;
-        await ApperUI.logout();
-        dispatch(clearUser());
-        navigate("/login");
-      } catch (error) {
-        console.error("Logout failed:", error);
+  const handleAuthSuccess = (user) => {
+    if (user) {
+      // Add admin role to user
+      const userWithRole = { ...user, roles: ["admin"] };
+      dispatch(setUser(userWithRole));
+      handleNavigation();
+    } else {
+      dispatch(clearUser());
+    }
+    handleAuthComplete();
+  };
+
+  const handleAuthError = (error) => {
+    console.error("Auth error:", error);
+    dispatch(clearUser());
+    handleAuthComplete();
+  };
+
+  const handleAuthComplete = () => {
+    setIsInitialized(true); // Local state for Auth component loading
+    dispatch(setInitialized(true)); // Redux state for Root component route guards
+  };
+
+  const handleNavigation = () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const redirectPath = urlParams.get("redirect");
+    
+    if (redirectPath) {
+      navigate(redirectPath);
+    } else {
+      // Navigate to home only if on auth pages
+      const authPages = ["/login", "/signup", "/callback"];
+      const isOnAuthPage = authPages.some(page => 
+        window.location.pathname.includes(page)
+      );
+      if (isOnAuthPage) {
+        navigate("/");
       }
-    },
+    }
+  };
+
+  const logout = async () => {
+    try {
+      await window.ApperSDK?.ApperUI?.logout();
+      dispatch(clearUser());
+      navigate("/login");
+    } catch (error) {
+      console.error("Logout failed:", error);
+    }
   };
 
   if (!isInitialized) {
-    console.log('⏳ Auth not initialized yet, showing loading...');
-    return (
-      <div className="loading flex items-center justify-center p-6 h-screen w-full">
-        <svg className="animate-spin" xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M12 2v4"></path><path d="m16.2 7.8 2.9-2.9"></path><path d="M18 12h4"></path><path d="m16.2 16.2 2.9 2.9"></path><path d="M12 18v4"></path><path d="m4.9 19.1 2.9-2.9"></path><path d="M2 12h4"></path><path d="m4.9 4.9 2.9 2.9"></path>
-        </svg>
-      </div>
-    );
+    return <LoadingSpinner />;
   }
 
-  console.log('✅ Auth initialized, rendering app...');
   return (
-    <AuthContext.Provider value={authMethods}>    
+    <AuthContext.Provider value={{ logout, isInitialized }}>
       {children}
     </AuthContext.Provider>
   );
 };
+
+const LoadingSpinner = () => (
+  <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
+    <div className="text-center space-y-4">
+      <svg className="animate-spin h-12 w-12 text-blue-600 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/>
+      </svg>
+      {/* <h3 className="text-lg font-semibold text-gray-800">Initializing Authentication</h3>
+      <p className="text-gray-600 text-sm">Please wait while we check your login status</p> */}
+    </div>
+  </div>
+);
 
 export default AuthProvider;

@@ -26,7 +26,6 @@ const CheckoutLayout = () => {
 
     // Redirect to cart if no items
     if (cartItems.length === 0) {
-      debugger;
       navigate('/', { replace: true });
       return;
     }
@@ -71,7 +70,6 @@ const CheckoutLayout = () => {
   }
 
   if (cartItems.length === 0) {
-    debugger;
     return null; // Will redirect in useEffect
   }
 
