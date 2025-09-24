@@ -65,9 +65,6 @@ export function checkAccess(accessType, user) {
                 allowed: !!user && hasRole,
                 redirectTo: user ? "/error?message=insufficient_permissions" : "/login"
             };
-
-            break;
-
         default:
             // Default to requiring authentication for unknown types
             return { allowed: !!user, redirectTo: "/login" };
