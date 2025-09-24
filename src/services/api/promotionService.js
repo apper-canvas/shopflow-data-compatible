@@ -1,40 +1,39 @@
 import { toast } from 'react-toastify';
+import { getApperClient } from '@/utils/apperClient';
 
 class PromotionService {
   constructor() {
-    this.initializeClient();
+    // No longer need to manage client instance
   }
 
-  initializeClient() {
-    if (typeof window !== 'undefined' && window.ApperSDK) {
-      const { ApperClient } = window.ApperSDK;
-      this.apperClient = new ApperClient({
-        apperProjectId: import.meta.env.VITE_APPER_PROJECT_ID,
-        apperPublicKey: import.meta.env.VITE_APPER_PUBLIC_KEY
-      });
+  async apperClient() {
+    const client = await getApperClient();
+    if (!client) {
+      throw new Error('ApperSDK not initialized. Please ensure the SDK is loaded.');
     }
+    return client;
   }
 
   async getAll() {
     try {
-      if (!this.apperClient) this.initializeClient();
-      
+      const client = await this.apperClient();
+
       const params = {
         fields: [
-          {"field": {"Name": "Id"}},
-          {"field": {"Name": "name_c"}},
-          {"field": {"Name": "description_c"}},
-          {"field": {"Name": "discount_percentage_c"}},
-          {"field": {"Name": "start_date_c"}},
-          {"field": {"Name": "end_date_c"}},
-          {"field": {"Name": "is_active_c"}},
-          {"field": {"Name": "product_ids_c"}},
-          {"field": {"Name": "promotion_type_c"}}
+          { "field": { "Name": "Id" } },
+          { "field": { "Name": "name_c" } },
+          { "field": { "Name": "description_c" } },
+          { "field": { "Name": "discount_percentage_c" } },
+          { "field": { "Name": "start_date_c" } },
+          { "field": { "Name": "end_date_c" } },
+          { "field": { "Name": "is_active_c" } },
+          { "field": { "Name": "product_ids_c" } },
+          { "field": { "Name": "promotion_type_c" } }
         ],
-        orderBy: [{"fieldName": "start_date_c", "sorttype": "DESC"}]
+        orderBy: [{ "fieldName": "start_date_c", "sorttype": "DESC" }]
       };
 
-      const response = await this.apperClient.fetchRecords('promotion_c', params);
+      const response = await client.fetchRecords('promotion_c', params);
 
       if (!response.success) {
         console.error(response.message);
@@ -52,31 +51,31 @@ class PromotionService {
 
   async getActivePromotions() {
     try {
-      if (!this.apperClient) this.initializeClient();
-      
+      const client = await this.apperClient();
+
       const currentDate = new Date().toISOString().split('T')[0];
-      
+
       const params = {
         fields: [
-          {"field": {"Name": "Id"}},
-          {"field": {"Name": "name_c"}},
-          {"field": {"Name": "description_c"}},
-          {"field": {"Name": "discount_percentage_c"}},
-          {"field": {"Name": "start_date_c"}},
-          {"field": {"Name": "end_date_c"}},
-          {"field": {"Name": "is_active_c"}},
-          {"field": {"Name": "product_ids_c"}},
-          {"field": {"Name": "promotion_type_c"}}
+          { "field": { "Name": "Id" } },
+          { "field": { "Name": "name_c" } },
+          { "field": { "Name": "description_c" } },
+          { "field": { "Name": "discount_percentage_c" } },
+          { "field": { "Name": "start_date_c" } },
+          { "field": { "Name": "end_date_c" } },
+          { "field": { "Name": "is_active_c" } },
+          { "field": { "Name": "product_ids_c" } },
+          { "field": { "Name": "promotion_type_c" } }
         ],
         where: [
-          {"FieldName": "is_active_c", "Operator": "EqualTo", "Values": [true]},
-          {"FieldName": "start_date_c", "Operator": "LessThanOrEqualTo", "Values": [currentDate]},
-          {"FieldName": "end_date_c", "Operator": "GreaterThanOrEqualTo", "Values": [currentDate]}
+          { "FieldName": "is_active_c", "Operator": "EqualTo", "Values": [true] },
+          { "FieldName": "start_date_c", "Operator": "LessThanOrEqualTo", "Values": [currentDate] },
+          { "FieldName": "end_date_c", "Operator": "GreaterThanOrEqualTo", "Values": [currentDate] }
         ],
-        orderBy: [{"fieldName": "start_date_c", "sorttype": "DESC"}]
+        orderBy: [{ "fieldName": "start_date_c", "sorttype": "DESC" }]
       };
 
-      const response = await this.apperClient.fetchRecords('promotion_c', params);
+      const response = await client.fetchRecords('promotion_c', params);
 
       if (!response.success) {
         console.error(response.message);
@@ -92,29 +91,29 @@ class PromotionService {
 
   async getProductPromotions(productId) {
     try {
-      if (!this.apperClient) this.initializeClient();
-      
+      const client = await this.apperClient();
+
       const currentDate = new Date().toISOString().split('T')[0];
-      
+
       const params = {
         fields: [
-          {"field": {"Name": "Id"}},
-          {"field": {"Name": "name_c"}},
-          {"field": {"Name": "discount_percentage_c"}},
-          {"field": {"Name": "start_date_c"}},
-          {"field": {"Name": "end_date_c"}},
-          {"field": {"Name": "promotion_type_c"}}
+          { "field": { "Name": "Id" } },
+          { "field": { "Name": "name_c" } },
+          { "field": { "Name": "discount_percentage_c" } },
+          { "field": { "Name": "start_date_c" } },
+          { "field": { "Name": "end_date_c" } },
+          { "field": { "Name": "promotion_type_c" } }
         ],
         where: [
-          {"FieldName": "is_active_c", "Operator": "EqualTo", "Values": [true]},
-          {"FieldName": "start_date_c", "Operator": "LessThanOrEqualTo", "Values": [currentDate]},
-          {"FieldName": "end_date_c", "Operator": "GreaterThanOrEqualTo", "Values": [currentDate]},
-          {"FieldName": "product_ids_c", "Operator": "Contains", "Values": [productId.toString()]}
+          { "FieldName": "is_active_c", "Operator": "EqualTo", "Values": [true] },
+          { "FieldName": "start_date_c", "Operator": "LessThanOrEqualTo", "Values": [currentDate] },
+          { "FieldName": "end_date_c", "Operator": "GreaterThanOrEqualTo", "Values": [currentDate] },
+          { "FieldName": "product_ids_c", "Operator": "Contains", "Values": [productId.toString()] }
         ],
-        orderBy: [{"fieldName": "discount_percentage_c", "sorttype": "DESC"}]
+        orderBy: [{ "fieldName": "discount_percentage_c", "sorttype": "DESC" }]
       };
 
-      const response = await this.apperClient.fetchRecords('promotion_c', params);
+      const response = await client.fetchRecords('promotion_c', params);
 
       if (!response.success) {
         console.error(response.message);
@@ -130,23 +129,23 @@ class PromotionService {
 
   async getById(id) {
     try {
-      if (!this.apperClient) this.initializeClient();
-      
+      const client = await this.apperClient();
+
       const params = {
         fields: [
-          {"field": {"Name": "Id"}},
-          {"field": {"Name": "name_c"}},
-          {"field": {"Name": "description_c"}},
-          {"field": {"Name": "discount_percentage_c"}},
-          {"field": {"Name": "start_date_c"}},
-          {"field": {"Name": "end_date_c"}},
-          {"field": {"Name": "is_active_c"}},
-          {"field": {"Name": "product_ids_c"}},
-          {"field": {"Name": "promotion_type_c"}}
+          { "field": { "Name": "Id" } },
+          { "field": { "Name": "name_c" } },
+          { "field": { "Name": "description_c" } },
+          { "field": { "Name": "discount_percentage_c" } },
+          { "field": { "Name": "start_date_c" } },
+          { "field": { "Name": "end_date_c" } },
+          { "field": { "Name": "is_active_c" } },
+          { "field": { "Name": "product_ids_c" } },
+          { "field": { "Name": "promotion_type_c" } }
         ]
       };
 
-      const response = await this.apperClient.getRecordById('promotion_c', id, params);
+      const response = await client.getRecordById('promotion_c', id, params);
 
       if (!response?.data) {
         return null;
@@ -161,8 +160,8 @@ class PromotionService {
 
   async create(promotionData) {
     try {
-      if (!this.apperClient) this.initializeClient();
-      
+      const client = await this.apperClient();
+
       const params = {
         records: [{
           name_c: promotionData.name_c,
@@ -176,7 +175,7 @@ class PromotionService {
         }]
       };
 
-      const response = await this.apperClient.createRecord('promotion_c', params);
+      const response = await client.createRecord('promotion_c', params);
 
       if (!response.success) {
         console.error(response.message);
@@ -187,7 +186,7 @@ class PromotionService {
       if (response.results) {
         const successful = response.results.filter(r => r.success);
         const failed = response.results.filter(r => !r.success);
-        
+
         if (failed.length > 0) {
           console.error(`Failed to create promotion:`, failed);
           failed.forEach(record => {
@@ -195,7 +194,7 @@ class PromotionService {
           });
           return null;
         }
-        
+
         toast.success("Promotion created successfully");
         return successful[0]?.data || null;
       }
@@ -208,8 +207,8 @@ class PromotionService {
 
   async update(id, promotionData) {
     try {
-      if (!this.apperClient) this.initializeClient();
-      
+      const client = await this.apperClient();
+
       const params = {
         records: [{
           Id: id,
@@ -224,7 +223,7 @@ class PromotionService {
         }]
       };
 
-      const response = await this.apperClient.updateRecord('promotion_c', params);
+      const response = await client.updateRecord('promotion_c', params);
 
       if (!response.success) {
         console.error(response.message);
@@ -235,7 +234,7 @@ class PromotionService {
       if (response.results) {
         const successful = response.results.filter(r => r.success);
         const failed = response.results.filter(r => !r.success);
-        
+
         if (failed.length > 0) {
           console.error(`Failed to update promotion:`, failed);
           failed.forEach(record => {
@@ -243,7 +242,7 @@ class PromotionService {
           });
           return null;
         }
-        
+
         toast.success("Promotion updated successfully");
         return successful[0]?.data || null;
       }
@@ -256,13 +255,13 @@ class PromotionService {
 
   async delete(id) {
     try {
-      if (!this.apperClient) this.initializeClient();
-      
+      const client = await this.apperClient();
+
       const params = {
         RecordIds: [id]
       };
 
-      const response = await this.apperClient.deleteRecord('promotion_c', params);
+      const response = await client.deleteRecord('promotion_c', params);
 
       if (!response.success) {
         console.error(response.message);
@@ -273,7 +272,7 @@ class PromotionService {
       if (response.results) {
         const successful = response.results.filter(r => r.success);
         const failed = response.results.filter(r => !r.success);
-        
+
         if (failed.length > 0) {
           console.error(`Failed to delete promotion:`, failed);
           failed.forEach(record => {
@@ -281,7 +280,7 @@ class PromotionService {
           });
           return false;
         }
-        
+
         toast.success("Promotion deleted successfully");
         return true;
       }
@@ -296,7 +295,7 @@ class PromotionService {
     if (!discountPercentage || discountPercentage <= 0) {
       return originalPrice;
     }
-    
+
     const discountAmount = (originalPrice * discountPercentage) / 100;
     return originalPrice - discountAmount;
   }

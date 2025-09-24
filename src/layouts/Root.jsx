@@ -4,6 +4,7 @@ import { useEffect, useState, createContext, useContext } from "react";
 import { setUser, clearUser, setInitialized } from "@/store/userSlice";
 import { getRouteConfig } from "@/router/routes.config";
 import { checkAccess } from "@/router/guards";
+import { getApperClient } from "@/utils/apperClient";
 
 // Auth context for logout functionality
 const AuthContext = createContext(null);
@@ -68,26 +69,34 @@ export default function Root() {
     }
   }, [isInitialized, user, location.pathname, location.search, navigate]);
 
-  const initializeAuth = () => {
-    if (!window.ApperSDK) {
-      dispatch(clearUser()); // Ensure user is null
+  const initializeAuth = async () => {
+    try {
+      // Wait for SDK to load and get client
+      const apperClient = await getApperClient();
+      
+      if (!apperClient || !window.ApperSDK) {
+        console.error('Failed to initialize ApperSDK or ApperClient');
+        dispatch(clearUser());
+        handleAuthComplete();
+        return;
+      }
+
+      const { ApperUI } = window.ApperSDK;
+
+      ApperUI.setup(apperClient, {
+        target: "#authentication",
+        clientId: import.meta.env.VITE_APPER_PROJECT_ID,
+        view: "both",
+        onSuccess: handleAuthSuccess,
+        onError: handleAuthError,
+      });
+
+      console.log('✅ Authentication initialized successfully');
+    } catch (error) {
+      console.error('Failed to initialize authentication:', error);
+      dispatch(clearUser());
       handleAuthComplete();
-      return;
     }
-
-    const { ApperClient, ApperUI } = window.ApperSDK;
-    const client = new ApperClient({
-      apperProjectId: import.meta.env.VITE_APPER_PROJECT_ID,
-      apperPublicKey: import.meta.env.VITE_APPER_PUBLIC_KEY,
-    });
-
-    ApperUI.setup(client, {
-      target: "#authentication",
-      clientId: import.meta.env.VITE_APPER_PROJECT_ID,
-      view: "both",
-      onSuccess: handleAuthSuccess,
-      onError: handleAuthError,
-    });
   };
 
   const handleAuthSuccess = (user) => {

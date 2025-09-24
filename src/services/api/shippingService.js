@@ -1,17 +1,22 @@
 import { toast } from 'react-toastify';
+import { getApperClient } from '@/utils/apperClient';
 
 class ShippingService {
   constructor() {
     this.tableName = 'shipping_information_c';
   }
 
+  get apperClient() {
+    const client = getApperClient();
+    if (!client) {
+      throw new Error('ApperSDK not initialized. Please ensure the SDK is loaded.');
+    }
+    return client;
+  }
+
   async create(shippingData) {
     try {
-      const { ApperClient } = window.ApperSDK;
-      const apperClient = new ApperClient({
-        apperProjectId: import.meta.env.VITE_APPER_PROJECT_ID,
-        apperPublicKey: import.meta.env.VITE_APPER_PUBLIC_KEY
-      });
+      const client = this.apperClient;
 
       const params = {
         records: [{
@@ -28,8 +33,8 @@ class ShippingService {
         }]
       };
 
-      const response = await apperClient.createRecord(this.tableName, params);
-      
+      const response = await client.createRecord(this.tableName, params);
+
       if (!response.success) {
         console.error('Failed to create shipping information:', response.message);
         toast.error(response.message);
@@ -39,7 +44,7 @@ class ShippingService {
       if (response.results) {
         const successful = response.results.filter(r => r.success);
         const failed = response.results.filter(r => !r.success);
-        
+
         if (failed.length > 0) {
           console.error(`Failed to create shipping information: ${JSON.stringify(failed)}`);
           failed.forEach(record => {
@@ -47,13 +52,13 @@ class ShippingService {
           });
           return null;
         }
-        
+
         if (successful.length > 0) {
           toast.success('Shipping information saved successfully');
           return successful[0].data;
         }
       }
-      
+
       return null;
     } catch (error) {
       console.error('Error creating shipping information:', error?.response?.data?.message || error);
@@ -64,34 +69,30 @@ class ShippingService {
 
   async getById(shippingId) {
     try {
-      const { ApperClient } = window.ApperSDK;
-      const apperClient = new ApperClient({
-        apperProjectId: import.meta.env.VITE_APPER_PROJECT_ID,
-        apperPublicKey: import.meta.env.VITE_APPER_PUBLIC_KEY
-      });
+      const client = this.apperClient;
 
       const params = {
         fields: [
-          {"field": {"Name": "Id"}},
-          {"field": {"Name": "first_name_c"}},
-          {"field": {"Name": "last_name_c"}},
-          {"field": {"Name": "address_line_1_c"}},
-          {"field": {"Name": "address_line_2_c"}},
-          {"field": {"Name": "city_c"}},
-          {"field": {"Name": "state_c"}},
-          {"field": {"Name": "zip_code_c"}},
-          {"field": {"Name": "country_c"}},
-          {"field": {"Name": "phone_number_c"}},
-          {"field": {"Name": "checkout_session_id_c"}}
+          { "field": { "Name": "Id" } },
+          { "field": { "Name": "first_name_c" } },
+          { "field": { "Name": "last_name_c" } },
+          { "field": { "Name": "address_line_1_c" } },
+          { "field": { "Name": "address_line_2_c" } },
+          { "field": { "Name": "city_c" } },
+          { "field": { "Name": "state_c" } },
+          { "field": { "Name": "zip_code_c" } },
+          { "field": { "Name": "country_c" } },
+          { "field": { "Name": "phone_number_c" } },
+          { "field": { "Name": "checkout_session_id_c" } }
         ]
       };
 
-      const response = await apperClient.getRecordById(this.tableName, shippingId, params);
-      
+      const response = await client.getRecordById(this.tableName, shippingId, params);
+
       if (!response?.data) {
         return null;
       }
-      
+
       return response.data;
     } catch (error) {
       console.error('Error fetching shipping information:', error?.response?.data?.message || error);
@@ -101,11 +102,7 @@ class ShippingService {
 
   async update(shippingId, updateData) {
     try {
-      const { ApperClient } = window.ApperSDK;
-      const apperClient = new ApperClient({
-        apperProjectId: import.meta.env.VITE_APPER_PROJECT_ID,
-        apperPublicKey: import.meta.env.VITE_APPER_PUBLIC_KEY
-      });
+      const client = this.apperClient;
 
       const params = {
         records: [{
@@ -114,8 +111,8 @@ class ShippingService {
         }]
       };
 
-      const response = await apperClient.updateRecord(this.tableName, params);
-      
+      const response = await client.updateRecord(this.tableName, params);
+
       if (!response.success) {
         console.error('Failed to update shipping information:', response.message);
         toast.error(response.message);
@@ -125,7 +122,7 @@ class ShippingService {
       if (response.results) {
         const successful = response.results.filter(r => r.success);
         const failed = response.results.filter(r => !r.success);
-        
+
         if (failed.length > 0) {
           console.error(`Failed to update shipping information: ${JSON.stringify(failed)}`);
           failed.forEach(record => {
@@ -133,13 +130,13 @@ class ShippingService {
           });
           return null;
         }
-        
+
         if (successful.length > 0) {
           toast.success('Shipping information updated successfully');
           return successful[0].data;
         }
       }
-      
+
       return null;
     } catch (error) {
       console.error('Error updating shipping information:', error?.response?.data?.message || error);
@@ -150,18 +147,14 @@ class ShippingService {
 
   async delete(shippingId) {
     try {
-      const { ApperClient } = window.ApperSDK;
-      const apperClient = new ApperClient({
-        apperProjectId: import.meta.env.VITE_APPER_PROJECT_ID,
-        apperPublicKey: import.meta.env.VITE_APPER_PUBLIC_KEY
-      });
+      const client = this.apperClient;
 
-      const params = { 
+      const params = {
         RecordIds: [shippingId]
       };
 
-      const response = await apperClient.deleteRecord(this.tableName, params);
-      
+      const response = await client.deleteRecord(this.tableName, params);
+
       if (!response.success) {
         console.error('Failed to delete shipping information:', response.message);
         toast.error(response.message);
@@ -171,7 +164,7 @@ class ShippingService {
       if (response.results) {
         const successful = response.results.filter(r => r.success);
         const failed = response.results.filter(r => !r.success);
-        
+
         if (failed.length > 0) {
           console.error(`Failed to delete shipping information: ${JSON.stringify(failed)}`);
           failed.forEach(record => {
@@ -179,13 +172,13 @@ class ShippingService {
           });
           return false;
         }
-        
+
         if (successful.length > 0) {
           toast.success('Shipping information deleted successfully');
           return true;
         }
       }
-      
+
       return false;
     } catch (error) {
       console.error('Error deleting shipping information:', error?.response?.data?.message || error);

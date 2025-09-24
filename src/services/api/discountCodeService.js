@@ -1,43 +1,42 @@
 import { toast } from 'react-toastify';
+import { getApperClient } from '@/utils/apperClient';
 
 class DiscountCodeService {
   constructor() {
-    this.initializeClient();
+    // No longer need to manage client instance
   }
 
-  initializeClient() {
-    if (typeof window !== 'undefined' && window.ApperSDK) {
-      const { ApperClient } = window.ApperSDK;
-      this.apperClient = new ApperClient({
-        apperProjectId: import.meta.env.VITE_APPER_PROJECT_ID,
-        apperPublicKey: import.meta.env.VITE_APPER_PUBLIC_KEY
-      });
+  get apperClient() {
+    const client = getApperClient();
+    if (!client) {
+      throw new Error('ApperSDK not initialized. Please ensure the SDK is loaded.');
     }
+    return client;
   }
 
   async getAll() {
     try {
-      if (!this.apperClient) this.initializeClient();
-      
+      const client = this.apperClient;
+
       const params = {
         fields: [
-          {"field": {"Name": "Id"}},
-          {"field": {"Name": "code_c"}},
-          {"field": {"Name": "name_c"}},
-          {"field": {"Name": "description_c"}},
-          {"field": {"Name": "discount_type_c"}},
-          {"field": {"Name": "discount_value_c"}},
-          {"field": {"Name": "start_date_c"}},
-          {"field": {"Name": "end_date_c"}},
-          {"field": {"Name": "is_active_c"}},
-          {"field": {"Name": "usage_limit_c"}},
-          {"field": {"Name": "usage_count_c"}},
-          {"field": {"Name": "minimum_order_amount_c"}}
+          { "field": { "Name": "Id" } },
+          { "field": { "Name": "code_c" } },
+          { "field": { "Name": "name_c" } },
+          { "field": { "Name": "description_c" } },
+          { "field": { "Name": "discount_type_c" } },
+          { "field": { "Name": "discount_value_c" } },
+          { "field": { "Name": "start_date_c" } },
+          { "field": { "Name": "end_date_c" } },
+          { "field": { "Name": "is_active_c" } },
+          { "field": { "Name": "usage_limit_c" } },
+          { "field": { "Name": "usage_count_c" } },
+          { "field": { "Name": "minimum_order_amount_c" } }
         ],
-        orderBy: [{"fieldName": "start_date_c", "sorttype": "DESC"}]
+        orderBy: [{ "fieldName": "start_date_c", "sorttype": "DESC" }]
       };
 
-      const response = await this.apperClient.fetchRecords('discount_code_c', params);
+      const response = await client.fetchRecords('discount_code_c', params);
 
       if (!response.success) {
         console.error(response.message);
@@ -55,8 +54,8 @@ class DiscountCodeService {
 
   async validateCode(code, orderAmount = 0) {
     try {
-      if (!this.apperClient) this.initializeClient();
-      
+      const client = this.apperClient;
+
       if (!code || typeof code !== 'string' || code.trim().length === 0) {
         return {
           isValid: false,
@@ -66,30 +65,30 @@ class DiscountCodeService {
       }
 
       const currentDate = new Date().toISOString().split('T')[0];
-      
+
       const params = {
         fields: [
-          {"field": {"Name": "Id"}},
-          {"field": {"Name": "code_c"}},
-          {"field": {"Name": "name_c"}},
-          {"field": {"Name": "discount_type_c"}},
-          {"field": {"Name": "discount_value_c"}},
-          {"field": {"Name": "start_date_c"}},
-          {"field": {"Name": "end_date_c"}},
-          {"field": {"Name": "is_active_c"}},
-          {"field": {"Name": "usage_limit_c"}},
-          {"field": {"Name": "usage_count_c"}},
-          {"field": {"Name": "minimum_order_amount_c"}}
+          { "field": { "Name": "Id" } },
+          { "field": { "Name": "code_c" } },
+          { "field": { "Name": "name_c" } },
+          { "field": { "Name": "discount_type_c" } },
+          { "field": { "Name": "discount_value_c" } },
+          { "field": { "Name": "start_date_c" } },
+          { "field": { "Name": "end_date_c" } },
+          { "field": { "Name": "is_active_c" } },
+          { "field": { "Name": "usage_limit_c" } },
+          { "field": { "Name": "usage_count_c" } },
+          { "field": { "Name": "minimum_order_amount_c" } }
         ],
         where: [
-          {"FieldName": "code_c", "Operator": "EqualTo", "Values": [code.trim().toUpperCase()]},
-          {"FieldName": "is_active_c", "Operator": "EqualTo", "Values": [true]},
-          {"FieldName": "start_date_c", "Operator": "LessThanOrEqualTo", "Values": [currentDate]},
-          {"FieldName": "end_date_c", "Operator": "GreaterThanOrEqualTo", "Values": [currentDate]}
+          { "FieldName": "code_c", "Operator": "EqualTo", "Values": [code.trim().toUpperCase()] },
+          { "FieldName": "is_active_c", "Operator": "EqualTo", "Values": [true] },
+          { "FieldName": "start_date_c", "Operator": "LessThanOrEqualTo", "Values": [currentDate] },
+          { "FieldName": "end_date_c", "Operator": "GreaterThanOrEqualTo", "Values": [currentDate] }
         ]
       };
 
-      const response = await this.apperClient.fetchRecords('discount_code_c', params);
+      const response = await client.fetchRecords('discount_code_c', params);
 
       if (!response.success) {
         console.error(response.message);
@@ -101,7 +100,7 @@ class DiscountCodeService {
       }
 
       const discountCodes = response.data || [];
-      
+
       if (discountCodes.length === 0) {
         return {
           isValid: false,
@@ -157,27 +156,27 @@ class DiscountCodeService {
 
   async applyDiscount(code) {
     try {
-      if (!this.apperClient) this.initializeClient();
-      
+      const client = this.apperClient;
+
       // Find the discount code
       const params = {
         fields: [
-          {"field": {"Name": "Id"}},
-          {"field": {"Name": "usage_count_c"}}
+          { "field": { "Name": "Id" } },
+          { "field": { "Name": "usage_count_c" } }
         ],
         where: [
-          {"FieldName": "code_c", "Operator": "EqualTo", "Values": [code.trim().toUpperCase()]}
+          { "FieldName": "code_c", "Operator": "EqualTo", "Values": [code.trim().toUpperCase()] }
         ]
       };
 
-      const response = await this.apperClient.fetchRecords('discount_code_c', params);
+      const response = await client.fetchRecords('discount_code_c', params);
 
       if (!response.success || !response.data || response.data.length === 0) {
         return false;
       }
 
       const discountCode = response.data[0];
-      
+
       // Increment usage count
       const updateParams = {
         records: [{
@@ -186,7 +185,7 @@ class DiscountCodeService {
         }]
       };
 
-      const updateResponse = await this.apperClient.updateRecord('discount_code_c', updateParams);
+      const updateResponse = await client.updateRecord('discount_code_c', updateParams);
 
       if (!updateResponse.success) {
         console.error("Failed to update discount code usage:", updateResponse.message);
@@ -202,26 +201,26 @@ class DiscountCodeService {
 
   async getById(id) {
     try {
-      if (!this.apperClient) this.initializeClient();
-      
+      const client = this.apperClient;
+
       const params = {
         fields: [
-          {"field": {"Name": "Id"}},
-          {"field": {"Name": "code_c"}},
-          {"field": {"Name": "name_c"}},
-          {"field": {"Name": "description_c"}},
-          {"field": {"Name": "discount_type_c"}},
-          {"field": {"Name": "discount_value_c"}},
-          {"field": {"Name": "start_date_c"}},
-          {"field": {"Name": "end_date_c"}},
-          {"field": {"Name": "is_active_c"}},
-          {"field": {"Name": "usage_limit_c"}},
-          {"field": {"Name": "usage_count_c"}},
-          {"field": {"Name": "minimum_order_amount_c"}}
+          { "field": { "Name": "Id" } },
+          { "field": { "Name": "code_c" } },
+          { "field": { "Name": "name_c" } },
+          { "field": { "Name": "description_c" } },
+          { "field": { "Name": "discount_type_c" } },
+          { "field": { "Name": "discount_value_c" } },
+          { "field": { "Name": "start_date_c" } },
+          { "field": { "Name": "end_date_c" } },
+          { "field": { "Name": "is_active_c" } },
+          { "field": { "Name": "usage_limit_c" } },
+          { "field": { "Name": "usage_count_c" } },
+          { "field": { "Name": "minimum_order_amount_c" } }
         ]
       };
 
-      const response = await this.apperClient.getRecordById('discount_code_c', id, params);
+      const response = await client.getRecordById('discount_code_c', id, params);
 
       if (!response?.data) {
         return null;
@@ -236,8 +235,8 @@ class DiscountCodeService {
 
   async create(discountCodeData) {
     try {
-      if (!this.apperClient) this.initializeClient();
-      
+      const client = this.apperClient;
+
       const params = {
         records: [{
           code_c: discountCodeData.code_c.toUpperCase(),
@@ -254,7 +253,7 @@ class DiscountCodeService {
         }]
       };
 
-      const response = await this.apperClient.createRecord('discount_code_c', params);
+      const response = await client.createRecord('discount_code_c', params);
 
       if (!response.success) {
         console.error(response.message);
@@ -265,7 +264,7 @@ class DiscountCodeService {
       if (response.results) {
         const successful = response.results.filter(r => r.success);
         const failed = response.results.filter(r => !r.success);
-        
+
         if (failed.length > 0) {
           console.error(`Failed to create discount code:`, failed);
           failed.forEach(record => {
@@ -273,7 +272,7 @@ class DiscountCodeService {
           });
           return null;
         }
-        
+
         toast.success("Discount code created successfully");
         return successful[0]?.data || null;
       }
@@ -286,8 +285,8 @@ class DiscountCodeService {
 
   async update(id, discountCodeData) {
     try {
-      if (!this.apperClient) this.initializeClient();
-      
+      const client = this.apperClient;
+
       const params = {
         records: [{
           Id: id,
@@ -304,7 +303,7 @@ class DiscountCodeService {
         }]
       };
 
-      const response = await this.apperClient.updateRecord('discount_code_c', params);
+      const response = await client.updateRecord('discount_code_c', params);
 
       if (!response.success) {
         console.error(response.message);
@@ -315,7 +314,7 @@ class DiscountCodeService {
       if (response.results) {
         const successful = response.results.filter(r => r.success);
         const failed = response.results.filter(r => !r.success);
-        
+
         if (failed.length > 0) {
           console.error(`Failed to update discount code:`, failed);
           failed.forEach(record => {
@@ -323,7 +322,7 @@ class DiscountCodeService {
           });
           return null;
         }
-        
+
         toast.success("Discount code updated successfully");
         return successful[0]?.data || null;
       }
@@ -336,13 +335,13 @@ class DiscountCodeService {
 
   async delete(id) {
     try {
-      if (!this.apperClient) this.initializeClient();
-      
+      const client = this.apperClient;
+
       const params = {
         RecordIds: [id]
       };
 
-      const response = await this.apperClient.deleteRecord('discount_code_c', params);
+      const response = await client.deleteRecord('discount_code_c', params);
 
       if (!response.success) {
         console.error(response.message);
@@ -353,7 +352,7 @@ class DiscountCodeService {
       if (response.results) {
         const successful = response.results.filter(r => r.success);
         const failed = response.results.filter(r => !r.success);
-        
+
         if (failed.length > 0) {
           console.error(`Failed to delete discount code:`, failed);
           failed.forEach(record => {
@@ -361,7 +360,7 @@ class DiscountCodeService {
           });
           return false;
         }
-        
+
         toast.success("Discount code deleted successfully");
         return true;
       }

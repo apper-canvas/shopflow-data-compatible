@@ -1,40 +1,39 @@
 import { toast } from "react-toastify";
+import { getApperClient } from '@/utils/apperClient';
 
 class HelpfulnessVoteService {
   constructor() {
-    this.initializeClient();
+    // No longer need to manage client instance
   }
 
-  initializeClient() {
-    if (typeof window !== 'undefined' && window.ApperSDK) {
-      const { ApperClient } = window.ApperSDK;
-      this.apperClient = new ApperClient({
-        apperProjectId: import.meta.env.VITE_APPER_PROJECT_ID,
-        apperPublicKey: import.meta.env.VITE_APPER_PUBLIC_KEY
-      });
+  get apperClient() {
+    const client = getApperClient();
+    if (!client) {
+      throw new Error('ApperSDK not initialized. Please ensure the SDK is loaded.');
     }
+    return client;
   }
 
   async vote(reviewId, isHelpful) {
     try {
-      if (!this.apperClient) this.initializeClient();
-      
+      const client = this.apperClient;
+
       // First, check if user already voted on this review
       const existingVoteParams = {
         fields: [
-          {"field": {"Name": "Id"}},
-          {"field": {"Name": "review_id_c"}},
-          {"field": {"Name": "user_id_c"}},
-          {"field": {"Name": "is_helpful_c"}}
+          { "field": { "Name": "Id" } },
+          { "field": { "Name": "review_id_c" } },
+          { "field": { "Name": "user_id_c" } },
+          { "field": { "Name": "is_helpful_c" } }
         ],
         where: [
-          {"FieldName": "review_id_c", "Operator": "EqualTo", "Values": [parseInt(reviewId)]}
+          { "FieldName": "review_id_c", "Operator": "EqualTo", "Values": [parseInt(reviewId)] }
         ],
-        pagingInfo: {"limit": 1, "offset": 0}
+        pagingInfo: { "limit": 1, "offset": 0 }
       };
 
-      const existingVotes = await this.apperClient.fetchRecords("review_helpfulness_vote_c", existingVoteParams);
-      
+      const existingVotes = await client.fetchRecords("review_helpfulness_vote_c", existingVoteParams);
+
       let voteResult;
       if (existingVotes?.data?.length > 0) {
         // Update existing vote
@@ -45,7 +44,7 @@ class HelpfulnessVoteService {
             is_helpful_c: isHelpful
           }]
         };
-        voteResult = await this.apperClient.updateRecord("review_helpfulness_vote_c", updateParams);
+        voteResult = await client.updateRecord("review_helpfulness_vote_c", updateParams);
       } else {
         // Create new vote
         const createParams = {
@@ -56,7 +55,7 @@ class HelpfulnessVoteService {
             vote_date_c: new Date().toISOString().split('T')[0]
           }]
         };
-        voteResult = await this.apperClient.createRecord("review_helpfulness_vote_c", createParams);
+        voteResult = await client.createRecord("review_helpfulness_vote_c", createParams);
       }
 
       if (!voteResult.success) {
@@ -65,7 +64,7 @@ class HelpfulnessVoteService {
 
       // Update the review's helpful counts
       await this.updateReviewHelpfulnessCounts(reviewId);
-      
+
       return true;
     } catch (error) {
       console.error("Error voting on review helpfulness:", error?.response?.data?.message || error);
@@ -75,21 +74,21 @@ class HelpfulnessVoteService {
 
   async updateReviewHelpfulnessCounts(reviewId) {
     try {
-      if (!this.apperClient) this.initializeClient();
-      
+      const client = this.apperClient;
+
       // Get all votes for this review
       const votesParams = {
         fields: [
-          {"field": {"Name": "is_helpful_c"}}
+          { "field": { "Name": "is_helpful_c" } }
         ],
         where: [
-          {"FieldName": "review_id_c", "Operator": "EqualTo", "Values": [parseInt(reviewId)]}
+          { "FieldName": "review_id_c", "Operator": "EqualTo", "Values": [parseInt(reviewId)] }
         ],
-        pagingInfo: {"limit": 1000, "offset": 0}
+        pagingInfo: { "limit": 1000, "offset": 0 }
       };
 
-      const votesResponse = await this.apperClient.fetchRecords("review_helpfulness_vote_c", votesParams);
-      
+      const votesResponse = await client.fetchRecords("review_helpfulness_vote_c", votesParams);
+
       let helpfulCount = 0;
       let notHelpfulCount = 0;
 
@@ -112,7 +111,7 @@ class HelpfulnessVoteService {
         }]
       };
 
-      await this.apperClient.updateRecord("product_review_c", updateReviewParams);
+      await client.updateRecord("product_review_c", updateReviewParams);
     } catch (error) {
       console.error("Error updating review helpfulness counts:", error?.response?.data?.message || error);
     }
@@ -120,23 +119,23 @@ class HelpfulnessVoteService {
 
   async getVotesForReview(reviewId) {
     try {
-      if (!this.apperClient) this.initializeClient();
-      
+      const client = this.apperClient;
+
       const params = {
         fields: [
-          {"field": {"Name": "Id"}},
-          {"field": {"Name": "review_id_c"}},
-          {"field": {"Name": "user_id_c"}},
-          {"field": {"Name": "is_helpful_c"}},
-          {"field": {"Name": "vote_date_c"}}
+          { "field": { "Name": "Id" } },
+          { "field": { "Name": "review_id_c" } },
+          { "field": { "Name": "user_id_c" } },
+          { "field": { "Name": "is_helpful_c" } },
+          { "field": { "Name": "vote_date_c" } }
         ],
         where: [
-          {"FieldName": "review_id_c", "Operator": "EqualTo", "Values": [parseInt(reviewId)]}
+          { "FieldName": "review_id_c", "Operator": "EqualTo", "Values": [parseInt(reviewId)] }
         ],
-        pagingInfo: {"limit": 100, "offset": 0}
+        pagingInfo: { "limit": 100, "offset": 0 }
       };
 
-      const response = await this.apperClient.fetchRecords("review_helpfulness_vote_c", params);
+      const response = await client.fetchRecords("review_helpfulness_vote_c", params);
 
       if (!response?.data) {
         return [];
@@ -157,21 +156,21 @@ class HelpfulnessVoteService {
 
   async getUserVoteForReview(reviewId, userId) {
     try {
-      if (!this.apperClient) this.initializeClient();
-      
+      const client = this.apperClient;
+
       const params = {
         fields: [
-          {"field": {"Name": "Id"}},
-          {"field": {"Name": "is_helpful_c"}}
+          { "field": { "Name": "Id" } },
+          { "field": { "Name": "is_helpful_c" } }
         ],
         where: [
-          {"FieldName": "review_id_c", "Operator": "EqualTo", "Values": [parseInt(reviewId)]},
-          {"FieldName": "user_id_c", "Operator": "EqualTo", "Values": [userId]}
+          { "FieldName": "review_id_c", "Operator": "EqualTo", "Values": [parseInt(reviewId)] },
+          { "FieldName": "user_id_c", "Operator": "EqualTo", "Values": [userId] }
         ],
-        pagingInfo: {"limit": 1, "offset": 0}
+        pagingInfo: { "limit": 1, "offset": 0 }
       };
 
-      const response = await this.apperClient.fetchRecords("review_helpfulness_vote_c", params);
+      const response = await client.fetchRecords("review_helpfulness_vote_c", params);
 
       if (!response?.data?.length) {
         return null;
