@@ -1,6 +1,6 @@
 import { useEffect, useContext } from 'react';
 import { Link } from 'react-router-dom';
-import { AuthContext } from '../../App';
+import { AuthContext } from '@/App';
 
 function Signup() {
   const { isInitialized } = useContext(AuthContext);
