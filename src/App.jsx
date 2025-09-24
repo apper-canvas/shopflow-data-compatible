@@ -64,7 +64,7 @@ if (redirectPath) {
           }
           // Store user information in Redux
           dispatch(setUser(JSON.parse(JSON.stringify(user))));
-        } else {
+} else {
           // User is not authenticated
           if (!isAuthPage) {
             navigate(
@@ -74,18 +74,10 @@ if (redirectPath) {
                 ? `/login?redirect=${currentPath}`
                 : '/login'
             );
-          } else if (redirectPath) {
-            if (
-              !['error', 'signup', 'login', 'callback'].some((path) => currentPath.includes(path))
-            ) {
-              navigate(`/login?redirect=${redirectPath}`);
-            } else {
-              navigate(currentPath);
-            }
-          } else if (isAuthPage) {
-            navigate(currentPath);
+          } else if (redirectPath && !['error', 'signup', 'login', 'callback'].some((path) => currentPath.includes(path))) {
+            navigate(`/login?redirect=${redirectPath}`);
           } else {
-            navigate('/login');
+            navigate(currentPath);
           }
           dispatch(clearUser());
         }
