@@ -55,14 +55,10 @@ function AppContent() {
         
         if (user) {
           // User is authenticated
-          if (redirectPath) {
+if (redirectPath) {
             navigate(redirectPath);
           } else if (!isAuthPage) {
-            if (!currentPath.includes('/login') && !currentPath.includes('/signup')) {
-              navigate(currentPath);
-            } else {
-              navigate('/');
-            }
+            navigate(currentPath);
           } else {
             navigate('/');
           }
