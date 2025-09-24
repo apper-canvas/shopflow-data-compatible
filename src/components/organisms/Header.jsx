@@ -6,7 +6,7 @@ import CartIcon from "@/components/molecules/CartIcon"
 import WishlistIcon from "@/components/molecules/WishlistIcon"
 import ApperIcon from "@/components/ApperIcon"
 import { useWishlist } from "@/hooks/useWishlist"
-import { useAuth } from "@/context/Auth"
+import { useAuth } from "@/layouts/Root"
 
 const Header = ({ cartItemCount, onCartClick, onSearch }) => {
   const { wishlistCount } = useWishlist()
