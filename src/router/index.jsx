@@ -1,7 +1,7 @@
 import { lazy, Suspense } from "react";
 import { createBrowserRouter, Navigate, Outlet } from "react-router-dom";
 
-import { getRouteConfig } from "./routes.config";
+import { getRouteConfig } from "./route.utils";
 
 import Root from "@/layouts/Root";
 
@@ -26,6 +26,7 @@ const CartReview = lazy(() => import("@/components/pages/CartReview"));
 const ShippingInfo = lazy(() => import("@/components/pages/ShippingInfo"));
 const ManageOrders = lazy(() => import("@/components/pages/ManageOrders"));
 
+// Route builder utility
 const createRoute = ({
   path,
   index,
@@ -41,10 +42,10 @@ const createRoute = ({
   } else {
     configPath = path.startsWith('/') ? path : `/${path}`;
   }
-  
+
   const config = getRouteConfig(configPath);
   const finalAccess = access || config.access;
-  
+
   const route = {
     ...(index ? { index: true } : { path }),
     element: element ? <Suspense fallback={<div>Loading.....</div>}>{element}</Suspense> : element,
@@ -67,7 +68,7 @@ const authRoutes = [
     element: <Login />,
   }),
   createRoute({
-    path: "signup", 
+    path: "signup",
     element: <Signup />,
   }),
   createRoute({

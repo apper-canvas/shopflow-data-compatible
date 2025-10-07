@@ -1,0 +1,53 @@
+{
+    "/": {
+        "access": "public"
+    },
+    "/product/:id": {
+        "access": "public"
+    },
+    "/category/:category": {
+        "access": "public"
+    },
+    "/login": {
+        "access": "public"
+    },
+    "/signup": {
+        "access": "public"
+    },
+    "/callback": {
+        "access": "public"
+    },
+    "/error": {
+        "access": "public"
+    },
+    "/search": {
+        "access": "authenticated"
+    },
+    "/wishlist": {
+        "access": "authenticated"
+    },
+    "/deals": {
+        "access": "authenticated"
+    },
+    "/orders": {
+        "access": "authenticated"
+    },
+    "/checkout": {
+        "access": "authenticated"
+    },
+    "/checkout/*": {
+        "access": "authenticated"
+    },
+    "/admin": {
+        "access": "role:admin"
+    },
+    "/admin/*": {
+        "access": "role:admin"
+    },
+    "/admin/**/*": {
+        "access": "role:admin"
+    },
+    "/premium/*": {
+        "access": "plan:premium"
+    }
+}
