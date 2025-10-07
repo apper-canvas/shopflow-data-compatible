@@ -10,6 +10,7 @@ const Login = lazy(() => import("@/components/pages/Login"));
 const Signup = lazy(() => import("@/components/pages/Signup"));
 const Callback = lazy(() => import("@/components/pages/Callback"));
 const Error = lazy(() => import("@/components/pages/ErrorPage"));
+const NotFound = lazy(() => import("@/components/pages/NotFoundPage"));
 
 const Layout = lazy(() => import("@/components/organisms/Layout"));
 const Home = lazy(() => import("@/components/pages/Homepage"));
@@ -159,7 +160,12 @@ const routes = [
     element: <Root />,
     children: [
       ...authRoutes,
-      ...mainRoutes
+      ...mainRoutes,
+      // Catch-all route for 404 Not Found
+      createRoute({
+        path: "*",
+        element: <NotFound />,
+      }),
     ],
   },
 ];
