@@ -85,7 +85,7 @@ export default function Root() {
   const handleAuthSuccess = (user) => {
     if (user) {
       // Add admin role to user
-      const userWithRole = { ...user, roles: ["employee"] };
+      const userWithRole = { ...user, roles: ["admin"] };
       dispatch(setUser(userWithRole));
       handleNavigation();
     } else {

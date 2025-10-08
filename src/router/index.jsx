@@ -20,6 +20,7 @@ const SearchResults = lazy(() => import("@/components/pages/SearchResults"));
 const Wishlist = lazy(() => import("@/components/pages/WishlistPage"));
 const Deals = lazy(() => import("@/components/pages/DealsPage"));
 const Orders = lazy(() => import("@/components/pages/OrdersPage"));
+const ExternalUserPage = lazy(() => import("@/components/pages/ExternalUserPage"));
 
 // Checkout components
 const CheckoutLayout = lazy(() => import("@/components/pages/CheckoutLayout"));
@@ -114,6 +115,10 @@ const mainRoutes = [
       createRoute({
         path: "orders",
         element: <Orders />,
+      }),
+      createRoute({
+        path: "external",
+        element: <ExternalUserPage />,
       }),
       // Checkout routes
       createRoute({

@@ -27,7 +27,11 @@ export const getRouteConfig = (path) => {
         }))
         .sort((a, b) => b.specificity - a.specificity);
 
-    return matches[0]?.config || { access: "authenticated" };
+    return matches[0]?.config || {
+        access: {
+            conditions: [{ label: "User must be logged in", rule: "authenticated" }]
+        }
+    };
 };
 
 // Pattern matching logic
@@ -88,6 +92,86 @@ function getSpecificity(pattern) {
 }
 
 // ==========================================
+// CONDITION EVALUATOR
+// ==========================================
+
+function evaluateRule(rule, user) {
+    // Basic rules
+    if (rule === "public") return true;
+    if (rule === "authenticated") return !!user;
+
+    // Field equality pattern: field:value
+    if (rule.includes(":")) {
+        if (!user) return false;
+
+        const [field, value] = rule.split(":");
+
+        // Handle array fields (roles, teams, permissions)
+        if (field === "role" || field === "roles") {
+            const userRoles = user.roles || [];
+            return userRoles.includes(value);
+        }
+
+        // Handle external user check
+        if (field === "external") {
+            const isExternal = user.userMetadata?.isExternal;
+            const expectedValue = value === "true" || value === true;
+            return isExternal === expectedValue;
+        }
+
+        // Direct field comparison
+        return user[field] === value;
+    }
+
+    return false;
+}
+
+// ==========================================
+// ACCESS CHECK
+// ==========================================
+
+export function checkAccess(accessConfig, user) {
+    // Backward compatibility: string format (old routes.json)
+    if (typeof accessConfig === "string") {
+        const allowed = evaluateRule(accessConfig, user);
+        return {
+            allowed,
+            redirectTo: allowed ? null : "/login",
+            failed: []
+        };
+    }
+
+    const { conditions = [], operator = "AND" } = accessConfig;
+
+    // Evaluate all conditions
+    const results = conditions.map(cond => ({
+        label: cond.label,
+        rule: cond.rule,
+        passed: evaluateRule(cond.rule, user)
+    }));
+
+    const failed = results.filter(r => !r.passed);
+
+    // Apply operator logic
+    const allowed = operator === "OR"
+        ? results.some(r => r.passed)
+        : results.every(r => r.passed);
+
+    // Determine redirect
+    let redirectTo = null;
+    if (!allowed) {
+        const needsAuth = failed.some(f => f.rule === "authenticated");
+        redirectTo = (!user || needsAuth) ? "/login" : "/error?message=insufficient_permissions";
+    }
+
+    return {
+        allowed,
+        redirectTo,
+        failed: failed.map(f => f.label)
+    };
+}
+
+// ==========================================
 // ACCESS GUARDS
 // ==========================================
 
@@ -108,29 +192,3 @@ export const createAccessGuard = () => {
         return null;
     };
 };
-
-export function checkAccess(accessType, user) {
-    switch (accessType) {
-        case "public":
-            return { allowed: true };
-
-        case "authenticated":
-            return {
-                allowed: !!user,
-                redirectTo: user ? null : "/login"
-            };
-
-        case "role:admin":
-            const role = accessType.split(":")[1];
-            const userRoles = user?.roles || [];
-            const hasRole = userRoles.includes(role);
-            return {
-                allowed: !!user && hasRole,
-                redirectTo: user ? "/error?message=insufficient_permissions" : "/login"
-            };
-        default:
-            // Default to requiring authentication for unknown types
-            return { allowed: !!user, redirectTo: "/login" };
-    }
-}
-
