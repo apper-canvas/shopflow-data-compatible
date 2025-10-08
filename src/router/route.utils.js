@@ -28,7 +28,7 @@ export const getRouteConfig = (path) => {
         .sort((a, b) => b.specificity - a.specificity);
 
     return matches[0]?.config || {
-        access: {
+        allow: {
             conditions: [{ label: "User must be logged in", rule: "authenticated" }]
         }
     };

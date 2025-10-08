@@ -44,7 +44,7 @@ export default function Root() {
     if (isInitialized) {
       const config = getRouteConfig(location.pathname);
 
-      const { allowed, redirectTo } = checkAccess(config.access, user);
+      const { allowed, redirectTo } = checkAccess(config.allow, user);
 
       if (!allowed && redirectTo) {
         const redirectPath = location.pathname + location.search;
