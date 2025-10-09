@@ -1,10 +1,4 @@
-import { redirect } from "react-router-dom";
-import { store } from "@/store/store";
 import routeConfig from "./routes.json";
-
-// ==========================================
-// ROUTE CONFIGURATION MATCHING
-// ==========================================
 
 // Get route configuration with pattern matching
 export const getRouteConfig = (path) => {
@@ -47,11 +41,9 @@ function matchesPattern(path, pattern) {
     // Handle wildcard patterns
     if (pattern.includes("*")) {
         if (pattern.endsWith("/**/*")) {
-            // Deep wildcard: /admin/**/* matches /admin/users/edit, /admin/settings/billing, etc.
             const base = pattern.replace("/**/*", "");
             return path.startsWith(base + "/");
         } else if (pattern.endsWith("/*")) {
-            // Single level wildcard: /admin/* matches /admin/users but NOT /admin/users/edit
             const base = pattern.replace("/*", "");
             const remainder = path.replace(base, "");
             return remainder.startsWith("/") && !remainder.substring(1).includes("/");
@@ -91,10 +83,6 @@ function getSpecificity(pattern) {
     return score;
 }
 
-// ==========================================
-// CONDITION EVALUATOR
-// ==========================================
-
 function evaluateRule(rule, user) {
     // Basic rules
     if (rule === "public") return true;
@@ -126,22 +114,8 @@ function evaluateRule(rule, user) {
     return false;
 }
 
-// ==========================================
-// ACCESS CHECK
-// ==========================================
-
-export function checkAccess(accessConfig, user) {
-    // Backward compatibility: string format (old routes.json)
-    if (typeof accessConfig === "string") {
-        const allowed = evaluateRule(accessConfig, user);
-        return {
-            allowed,
-            redirectTo: allowed ? null : "/login",
-            failed: []
-        };
-    }
-
-    const { conditions = [], operator = "AND" } = accessConfig;
+export function verifyRouteAccess(config, user) {
+    const { conditions = [], operator = "AND" } = config;
 
     // Evaluate all conditions
     const results = conditions.map(cond => ({
@@ -171,24 +145,3 @@ export function checkAccess(accessConfig, user) {
     };
 }
 
-// ==========================================
-// ACCESS GUARDS
-// ==========================================
-
-export const createAccessGuard = () => {
-    return ({ request }) => {
-        const state = store.getState();
-        const { isInitialized } = state.user;
-
-        const url = new URL(request.url);
-        const fullRedirectPath = url.pathname + url.search; // Include query params
-
-        // If auth isn't initialized yet, redirect to login with actualPath
-        // ApperSDK will handle redirecting back after auth completes
-        if (!isInitialized) {
-            throw redirect(`/login?redirect=${encodeURIComponent(fullRedirectPath)}`);
-        }
-
-        return null;
-    };
-};

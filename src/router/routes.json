@@ -185,7 +185,7 @@
         }
     },
     "/external": {
-        "access": {
+        "allow": {
             "conditions": [
                 {
                     "label": "Must be external user",

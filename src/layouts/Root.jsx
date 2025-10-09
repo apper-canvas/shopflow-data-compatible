@@ -2,7 +2,7 @@ import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import { useEffect, useState, createContext, useContext } from "react";
 import { setUser, clearUser, setInitialized } from "@/store/userSlice";
-import { getRouteConfig, checkAccess } from "@/router/route.utils";
+import { getRouteConfig, verifyRouteAccess } from "@/router/route.utils";
 import { getApperClient } from "@/services/apperClient";
 
 // Auth context for logout functionality
@@ -44,7 +44,7 @@ export default function Root() {
     if (isInitialized) {
       const config = getRouteConfig(location.pathname);
 
-      const { allowed, redirectTo } = checkAccess(config.allow, user);
+      const { allowed, redirectTo } = verifyRouteAccess(config.allow, user);
 
       if (!allowed && redirectTo) {
         const redirectPath = location.pathname + location.search;

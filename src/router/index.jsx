@@ -46,7 +46,7 @@ const createRoute = ({
   }
 
   const config = getRouteConfig(configPath);
-  const finalAccess = access || config.access;
+  const finalAccess = access || config.allow;
 
   const route = {
     ...(index ? { index: true } : { path }),
@@ -137,6 +137,25 @@ const mainRoutes = [
           createRoute({
             path: "shipping",
             element: <ShippingInfo />,
+          }),
+          createRoute({
+            path: ":id",
+            element: (
+              <div>
+                Order Detail for ID: <span style={{ color: "blue" }}>{'{'}window.location.pathname.split('/').pop(){'}'}</span>
+                <Outlet />
+              </div>
+            ),
+            children: [
+              createRoute({
+                path: "summary",
+                element: (
+                  <div>
+                    <strong>Order Summary Nested Route</strong>
+                  </div>
+                ),
+              }),
+            ],
           }),
         ],
       }),
