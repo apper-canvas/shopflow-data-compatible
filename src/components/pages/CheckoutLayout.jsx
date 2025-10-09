@@ -26,11 +26,11 @@ const CheckoutLayout = () => {
 
     // Redirect to cart if no items
     if (cartItems.length === 0) {
-      navigate('/', { replace: true });
-      return;
-    }
+navigate('/', { replace: true });
+    return;
+  }
 
-    // Update current step based on URL
+  // Update current step based on URL
     const currentPath = location.pathname;
     const step = steps.find(s => currentPath.includes(s.key));
     if (step && step.key !== currentStep) {
@@ -84,11 +84,11 @@ const CheckoutLayout = () => {
                 variant="ghost"
                 onClick={() => navigate('/')}
                 className="p-2"
-              >
-                <ApperIcon name="ArrowLeft" size={20} />
-              </Button>
-              <h1 className="text-xl font-semibold text-primary">Checkout</h1>
-            </div>
+>
+              <ApperIcon name="ArrowLeft" size={20} />
+            </Button>
+            <h1 className="text-xl font-semibold text-primary">Checkout</h1>
+          </div>
           </div>
         </div>
       </div>
