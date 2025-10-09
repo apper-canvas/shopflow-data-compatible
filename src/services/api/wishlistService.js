@@ -1,18 +1,17 @@
 import { toast } from "react-toastify"
+import { getApperClient } from '@/services/apperClient'
 
 class WishlistService {
   constructor() {
-    this.initializeClient()
+    // No longer need to manage client instance
   }
 
-  initializeClient() {
-    if (typeof window !== 'undefined' && window.ApperSDK) {
-      const { ApperClient } = window.ApperSDK
-      this.apperClient = new ApperClient({
-        apperProjectId: import.meta.env.VITE_APPER_PROJECT_ID,
-        apperPublicKey: import.meta.env.VITE_APPER_PUBLIC_KEY
-      })
+  get apperClient() {
+    const client = getApperClient()
+    if (!client) {
+      throw new Error('ApperSDK not initialized. Please ensure the SDK is loaded.')
     }
+    return client
   }
 
   // Mock implementation - replace with actual ApperClient calls when database is available
@@ -28,7 +27,7 @@ class WishlistService {
       //   where: [{"FieldName": "user_id_c", "Operator": "EqualTo", "Values": [parseInt(userId)]}]
       // }
       // const response = await this.apperClient.fetchRecords("wishlist_c", params)
-      
+
       // Mock response for now - data comes from localStorage via useWishlist hook
       await new Promise(resolve => setTimeout(resolve, 100))
       return {
@@ -56,7 +55,7 @@ class WishlistService {
       //   where: [{"FieldName": "wishlist_id_c", "Operator": "EqualTo", "Values": [parseInt(wishlistId)]}]
       // }
       // const response = await this.apperClient.fetchRecords("wishlist_item_c", params)
-      
+
       // Mock - actual data managed by localStorage and Redux
       await new Promise(resolve => setTimeout(resolve, 100))
       return []
@@ -79,7 +78,7 @@ class WishlistService {
       //   ]
       // }
       // const response = await this.apperClient.createRecord("wishlist_item_c", params)
-      
+
       // Mock response
       await new Promise(resolve => setTimeout(resolve, 150))
       return {
@@ -99,7 +98,7 @@ class WishlistService {
       // This would be the actual ApperClient implementation:
       // const params = { RecordIds: [parseInt(wishlistItemId)] }
       // const response = await this.apperClient.deleteRecord("wishlist_item_c", params)
-      
+
       // Mock response
       await new Promise(resolve => setTimeout(resolve, 150))
       return true
@@ -121,7 +120,7 @@ class WishlistService {
       //   ]
       // }
       // const response = await this.apperClient.createRecord("wishlist_c", params)
-      
+
       // Mock response
       await new Promise(resolve => setTimeout(resolve, 200))
       return {

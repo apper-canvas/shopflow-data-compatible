@@ -14,7 +14,7 @@ import { setError, setLoading, setSessionId } from "@/store/checkoutSlice";
 const CartReview = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
-const { cartItems, updateQuantity, removeFromCart, getSubtotal } = useCart();
+const { cartItems, updateQuantity, removeFromCart, getSubtotal, isCartLoading } = useCart();
   const { sessionId, loading, error, appliedDiscount } = useSelector((state) => state.checkout);
   const { user } = useSelector((state) => state.user);
 
@@ -41,6 +41,9 @@ const { cartItems, updateQuantity, removeFromCart, getSubtotal } = useCart();
   };
 
   useEffect(() => {
+    // Wait for cart to load before checking if it's empty
+    if (isCartLoading) return;
+
     // Redirect to home if cart is empty
     if (cartItems.length === 0) {
       navigate('/', { replace: true });
@@ -51,7 +54,7 @@ const { cartItems, updateQuantity, removeFromCart, getSubtotal } = useCart();
     if (!sessionId && user && cartItems.length > 0) {
       createCheckoutSession();
     }
-  }, [cartItems.length, sessionId, user]);
+  }, [cartItems.length, sessionId, user, isCartLoading]);
 
   const createCheckoutSession = async () => {
     dispatch(setLoading(true));
@@ -81,12 +84,26 @@ const { cartItems, updateQuantity, removeFromCart, getSubtotal } = useCart();
   };
 
   const handleContinueToShipping = () => {
+    if (isCartLoading) {
+      toast.info('Please wait, cart is loading...');
+      return;
+    }
     if (cartItems.length === 0) {
       toast.error('Your cart is empty');
       return;
     }
     navigate('/checkout/shipping');
   };
+
+  // Show loading while cart is loading
+  if (isCartLoading) {
+    return (
+      <div className="flex justify-center items-center py-12">
+        <Loading />
+        <p className="ml-3 text-secondary">Loading cart...</p>
+      </div>
+    );
+  }
 
   if (loading) {
     return (
@@ -179,7 +196,7 @@ const { cartItems, updateQuantity, removeFromCart, getSubtotal } = useCart();
         </Button>
         <Button
           onClick={handleContinueToShipping}
-          disabled={cartItems.length === 0}
+          disabled={isCartLoading || cartItems.length === 0}
           size="lg"
           className="flex-1"
         >

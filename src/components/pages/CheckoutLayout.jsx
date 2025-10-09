@@ -12,7 +12,7 @@ const CheckoutLayout = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const { cartItems, getSubtotal } = useCart();
+  const { cartItems, getSubtotal, isCartLoading } = useCart();
   const { currentStep } = useSelector((state) => state.checkout);
 
   const steps = [
@@ -21,6 +21,9 @@ const CheckoutLayout = () => {
   ];
 
   useEffect(() => {
+    // Wait for cart to load before checking if it's empty
+    if (isCartLoading) return;
+
     // Redirect to cart if no items
     if (cartItems.length === 0) {
 navigate('/', { replace: true });
@@ -33,7 +36,7 @@ navigate('/', { replace: true });
     if (step && step.key !== currentStep) {
       dispatch(setCurrentStep(step.key));
     }
-  }, [location.pathname, cartItems.length, currentStep, dispatch, navigate]);
+  }, [location.pathname, cartItems.length, currentStep, dispatch, navigate, isCartLoading]);
 
   const getCurrentStepIndex = () => {
     return steps.findIndex(s => s.key === currentStep);
@@ -53,6 +56,18 @@ navigate('/', { replace: true });
       navigate(step.path);
     }
   };
+
+  // Show loading state while cart is loading
+  if (isCartLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2"></div>
+          <p>Loading cart...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (cartItems.length === 0) {
     return null; // Will redirect in useEffect

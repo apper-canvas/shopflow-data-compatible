@@ -1,32 +1,32 @@
-import React, { useState, useEffect } from "react"
-import { useOutletContext } from "react-router-dom"
-import ProductGrid from "@/components/organisms/ProductGrid"
-import { productService } from "@/services/api/productService"
+import React, { useState, useEffect } from "react";
+import { useOutletContext } from "react-router-dom";
+import ProductGrid from "@/components/organisms/ProductGrid";
+import { productService } from "@/services/api/productService";
 
 const Homepage = () => {
-  const [products, setProducts] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState("")
-  
-  const { addToCart } = useOutletContext()
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  const { addToCart } = useOutletContext();
 
   const loadFeaturedProducts = async () => {
     try {
-      setLoading(true)
-      setError("")
-      const featuredProducts = await productService.getFeatured(12)
-      setProducts(featuredProducts)
+      setLoading(true);
+      setError("");
+      const featuredProducts = await productService.getFeatured(12);
+      setProducts(featuredProducts);
     } catch (err) {
-      setError("Failed to load featured products. Please try again.")
-      console.error("Error loading featured products:", err)
+      setError("Failed to load featured products. Please try again.");
+      console.error("Error loading featured products:", err);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   useEffect(() => {
-    loadFeaturedProducts()
-  }, [])
+    loadFeaturedProducts();
+  }, []);
 
   return (
     <div className="max-w-7xl mx-auto">
@@ -45,16 +45,13 @@ const Homepage = () => {
           </div>
         </div>
       </section>
-
       {/* Featured Products */}
       <section className="py-8">
         <div className="px-6 mb-6">
           <h2 className="text-2xl font-bold text-primary mb-2">
             Featured Products
           </h2>
-          <p className="text-secondary">
-            Discover our most popular items
-          </p>
+          <p className="text-secondary">Discover our most popular items</p>
         </div>
 
         <ProductGrid
@@ -68,7 +65,7 @@ const Homepage = () => {
         />
       </section>
     </div>
-  )
-}
+  );
+};
 
-export default Homepage
+export default Homepage;

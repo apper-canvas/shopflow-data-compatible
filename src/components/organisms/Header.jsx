@@ -1,14 +1,49 @@
-import React from "react"
+import React, { useState, useEffect, useRef } from "react"
 import { Link } from "react-router-dom"
+import { useSelector } from "react-redux"
 import SearchBar from "@/components/molecules/SearchBar"
 import CartIcon from "@/components/molecules/CartIcon"
 import WishlistIcon from "@/components/molecules/WishlistIcon"
 import ApperIcon from "@/components/ApperIcon"
 import { useWishlist } from "@/hooks/useWishlist"
+import { useAuth } from "@/layouts/Root"
 
 const Header = ({ cartItemCount, onCartClick, onSearch }) => {
   const { wishlistCount } = useWishlist()
+  const { logout } = useAuth()
+  const { isAuthenticated, user } = useSelector((state) => state.user)
+  const [isLoggingOut, setIsLoggingOut] = useState(false)
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
+  const userMenuRef = useRef(null)
   const categories = ["Electronics", "Clothing", "Home & Kitchen", "Sports", "Accessories"]
+
+  // Check if user has admin access
+  const hasAdminAccess = user?.roles?.includes("admin") || user?.roles?.includes("employee")
+
+  // Close user menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (userMenuRef.current && !userMenuRef.current.contains(event.target)) {
+        setIsUserMenuOpen(false)
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
+
+  const handleLogout = async () => {
+    if (isLoggingOut) return // Prevent multiple logout attempts
+    
+    setIsLoggingOut(true)
+    try {
+      await logout()
+    } catch (error) {
+      console.error("Logout error:", error)
+    } finally {
+      setIsLoggingOut(false)
+    }
+  }
 
   return (
     <header className="bg-surface shadow-sm border-b border-gray-100 sticky top-0 z-50">
@@ -30,7 +65,7 @@ const Header = ({ cartItemCount, onCartClick, onSearch }) => {
             >
               Home
             </Link>
-<Link
+            <Link
               to="/deals"
               className="text-secondary hover:text-primary transition-colors font-medium"
             >
@@ -60,18 +95,11 @@ const Header = ({ cartItemCount, onCartClick, onSearch }) => {
             </div>
           </nav>
 
-{/* Search & Cart */}
+          {/* Search & Cart */}
           <div className="flex items-center gap-4">
             <div className="hidden sm:block">
               <SearchBar onSearch={onSearch} />
             </div>
-            
-            <Link
-              to="/orders"
-              className="text-primary hover:text-accent font-medium transition-colors hidden md:block"
-            >
-              My Orders
-            </Link>
             
             <WishlistIcon itemCount={wishlistCount} />
             
@@ -79,6 +107,81 @@ const Header = ({ cartItemCount, onCartClick, onSearch }) => {
               itemCount={cartItemCount}
               onClick={onCartClick}
             />
+
+            {/* User Menu Dropdown - visible when authenticated */}
+            {isAuthenticated && (
+              <div className="relative" ref={userMenuRef}>
+                <button
+                  onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+                  className="flex items-center gap-1 text-secondary hover:text-primary font-medium transition-colors"
+                >
+                  <ApperIcon name="User" size={16} />
+                  <ApperIcon name="ChevronDown" size={12} />
+                </button>
+
+                {/* Dropdown Menu */}
+                {isUserMenuOpen && (
+                  <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-100 py-2 z-50">
+                    <Link
+                      to="/orders"
+                      onClick={() => setIsUserMenuOpen(false)}
+                      className="flex items-center gap-2 px-4 py-2 text-sm text-secondary hover:text-primary hover:bg-gray-50 transition-colors"
+                    >
+                      <ApperIcon name="Package" size={16} />
+                      My Orders
+                    </Link>
+                    
+                    {hasAdminAccess && (
+                      <Link
+                        to="/admin/manage-orders"
+                        onClick={() => setIsUserMenuOpen(false)}
+                        className="flex items-center gap-2 px-4 py-2 text-sm text-secondary hover:text-primary hover:bg-gray-50 transition-colors"
+                      >
+                        <ApperIcon name="Settings" size={16} />
+                        Manage Orders
+                      </Link>
+                    )}
+                    
+                    <hr className="my-1 border-gray-100" />
+                    
+                    <button
+                      onClick={() => {
+                        setIsUserMenuOpen(false)
+                        handleLogout()
+                      }}
+                      disabled={isLoggingOut}
+                      className={`flex items-center gap-2 w-full px-4 py-2 text-sm transition-colors ${
+                        isLoggingOut
+                          ? "text-gray-400 cursor-not-allowed"
+                          : "text-secondary hover:text-red-600 hover:bg-red-50"
+                      }`}
+                    >
+                      {isLoggingOut ? (
+                        <>
+                          <div className="animate-spin w-4 h-4 border-2 border-gray-300 border-t-gray-600 rounded-full"></div>
+                          Logging out...
+                        </>
+                      ) : (
+                        <>
+                          <ApperIcon name="LogOut" size={16} />
+                          Logout
+                        </>
+                      )}
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Login Button - visible when not authenticated */}
+            {!isAuthenticated && (
+              <Link
+                to="/login"
+                className="text-primary hover:text-accent font-medium transition-colors"
+              >
+                Login
+              </Link>
+            )}
           </div>
         </div>
 

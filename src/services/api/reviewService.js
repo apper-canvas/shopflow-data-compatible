@@ -1,40 +1,39 @@
 import { toast } from "react-toastify";
+import { getApperClient } from '@/services/apperClient';
 
 class ReviewService {
   constructor() {
-    this.initializeClient();
+    // No longer need to manage client instance
   }
 
-  initializeClient() {
-    if (typeof window !== 'undefined' && window.ApperSDK) {
-      const { ApperClient } = window.ApperSDK;
-      this.apperClient = new ApperClient({
-        apperProjectId: import.meta.env.VITE_APPER_PROJECT_ID,
-        apperPublicKey: import.meta.env.VITE_APPER_PUBLIC_KEY
-      });
+  async apperClient() {
+    const client = await getApperClient();
+    if (!client) {
+      throw new Error('ApperSDK not initialized. Please ensure the SDK is loaded.');
     }
+    return client;
   }
 
   async getAll() {
     try {
-      if (!this.apperClient) this.initializeClient();
-      
+      const client = await this.apperClient();
+
       const params = {
         fields: [
-          {"field": {"Name": "Id"}},
-          {"field": {"Name": "product_id_c"}},
-          {"field": {"Name": "rating_c"}},
-          {"field": {"Name": "review_text_c"}},
-          {"field": {"Name": "reviewer_name_c"}},
-          {"field": {"Name": "review_date_c"}},
-          {"field": {"Name": "helpful_count_c"}},
-          {"field": {"Name": "not_helpful_count_c"}}
+          { "field": { "Name": "Id" } },
+          { "field": { "Name": "product_id_c" } },
+          { "field": { "Name": "rating_c" } },
+          { "field": { "Name": "review_text_c" } },
+          { "field": { "Name": "reviewer_name_c" } },
+          { "field": { "Name": "review_date_c" } },
+          { "field": { "Name": "helpful_count_c" } },
+          { "field": { "Name": "not_helpful_count_c" } }
         ],
-        orderBy: [{"fieldName": "review_date_c", "sorttype": "DESC"}],
-        pagingInfo: {"limit": 100, "offset": 0}
+        orderBy: [{ "fieldName": "review_date_c", "sorttype": "DESC" }],
+        pagingInfo: { "limit": 100, "offset": 0 }
       };
 
-      const response = await this.apperClient.fetchRecords("product_review_c", params);
+      const response = await client.fetchRecords("product_review_c", params);
 
       if (!response?.data?.length) {
         return [];
@@ -58,22 +57,22 @@ class ReviewService {
 
   async getById(id) {
     try {
-      if (!this.apperClient) this.initializeClient();
-      
+      const client = await this.apperClient();
+
       const params = {
         fields: [
-          {"field": {"Name": "Id"}},
-          {"field": {"Name": "product_id_c"}},
-          {"field": {"Name": "rating_c"}},
-          {"field": {"Name": "review_text_c"}},
-          {"field": {"Name": "reviewer_name_c"}},
-          {"field": {"Name": "review_date_c"}},
-          {"field": {"Name": "helpful_count_c"}},
-          {"field": {"Name": "not_helpful_count_c"}}
+          { "field": { "Name": "Id" } },
+          { "field": { "Name": "product_id_c" } },
+          { "field": { "Name": "rating_c" } },
+          { "field": { "Name": "review_text_c" } },
+          { "field": { "Name": "reviewer_name_c" } },
+          { "field": { "Name": "review_date_c" } },
+          { "field": { "Name": "helpful_count_c" } },
+          { "field": { "Name": "not_helpful_count_c" } }
         ]
       };
 
-      const response = await this.apperClient.getRecordById("product_review_c", parseInt(id), params);
+      const response = await client.getRecordById("product_review_c", parseInt(id), params);
 
       if (!response?.data) {
         return null;
@@ -98,41 +97,41 @@ class ReviewService {
 
   async getByProductId(productId, sortBy = "recent") {
     try {
-      if (!this.apperClient) this.initializeClient();
-      
-      let orderBy = [{"fieldName": "review_date_c", "sorttype": "DESC"}];
-      
+      const client = await this.apperClient();
+
+      let orderBy = [{ "fieldName": "review_date_c", "sorttype": "DESC" }];
+
       switch (sortBy) {
         case "helpful":
-          orderBy = [{"fieldName": "helpful_count_c", "sorttype": "DESC"}];
+          orderBy = [{ "fieldName": "helpful_count_c", "sorttype": "DESC" }];
           break;
         case "rating_high":
-          orderBy = [{"fieldName": "rating_c", "sorttype": "DESC"}];
+          orderBy = [{ "fieldName": "rating_c", "sorttype": "DESC" }];
           break;
         case "rating_low":
-          orderBy = [{"fieldName": "rating_c", "sorttype": "ASC"}];
+          orderBy = [{ "fieldName": "rating_c", "sorttype": "ASC" }];
           break;
         default:
-          orderBy = [{"fieldName": "review_date_c", "sorttype": "DESC"}];
+          orderBy = [{ "fieldName": "review_date_c", "sorttype": "DESC" }];
       }
 
       const params = {
         fields: [
-          {"field": {"Name": "Id"}},
-          {"field": {"Name": "product_id_c"}},
-          {"field": {"Name": "rating_c"}},
-          {"field": {"Name": "review_text_c"}},
-          {"field": {"Name": "reviewer_name_c"}},
-          {"field": {"Name": "review_date_c"}},
-          {"field": {"Name": "helpful_count_c"}},
-          {"field": {"Name": "not_helpful_count_c"}}
+          { "field": { "Name": "Id" } },
+          { "field": { "Name": "product_id_c" } },
+          { "field": { "Name": "rating_c" } },
+          { "field": { "Name": "review_text_c" } },
+          { "field": { "Name": "reviewer_name_c" } },
+          { "field": { "Name": "review_date_c" } },
+          { "field": { "Name": "helpful_count_c" } },
+          { "field": { "Name": "not_helpful_count_c" } }
         ],
-        where: [{"FieldName": "product_id_c", "Operator": "EqualTo", "Values": [parseInt(productId)]}],
+        where: [{ "FieldName": "product_id_c", "Operator": "EqualTo", "Values": [parseInt(productId)] }],
         orderBy: orderBy,
-        pagingInfo: {"limit": 50, "offset": 0}
+        pagingInfo: { "limit": 50, "offset": 0 }
       };
 
-      const response = await this.apperClient.fetchRecords("product_review_c", params);
+      const response = await client.fetchRecords("product_review_c", params);
 
       if (!response?.data?.length) {
         return [];
@@ -156,31 +155,31 @@ class ReviewService {
 
   async getReviewStats(productId) {
     try {
-      if (!this.apperClient) this.initializeClient();
-      
+      const client = await this.apperClient();
+
       const params = {
         fields: [
-          {"field": {"Name": "rating_c"}}
+          { "field": { "Name": "rating_c" } }
         ],
-        where: [{"FieldName": "product_id_c", "Operator": "EqualTo", "Values": [parseInt(productId)]}],
-        pagingInfo: {"limit": 1000, "offset": 0}
+        where: [{ "FieldName": "product_id_c", "Operator": "EqualTo", "Values": [parseInt(productId)] }],
+        pagingInfo: { "limit": 1000, "offset": 0 }
       };
 
-      const response = await this.apperClient.fetchRecords("product_review_c", params);
+      const response = await client.fetchRecords("product_review_c", params);
 
       if (!response?.data?.length) {
         return {
           totalReviews: 0,
           averageRating: 0,
-          ratingBreakdown: {1: 0, 2: 0, 3: 0, 4: 0, 5: 0}
+          ratingBreakdown: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 }
         };
       }
 
       const ratings = response.data.map(review => parseInt(review.rating_c || 0));
       const totalReviews = ratings.length;
       const averageRating = ratings.reduce((sum, rating) => sum + rating, 0) / totalReviews;
-      
-      const ratingBreakdown = {1: 0, 2: 0, 3: 0, 4: 0, 5: 0};
+
+      const ratingBreakdown = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
       ratings.forEach(rating => {
         if (rating >= 1 && rating <= 5) {
           ratingBreakdown[rating]++;
@@ -197,15 +196,15 @@ class ReviewService {
       return {
         totalReviews: 0,
         averageRating: 0,
-        ratingBreakdown: {1: 0, 2: 0, 3: 0, 4: 0, 5: 0}
+        ratingBreakdown: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 }
       };
     }
   }
 
   async create(reviewData) {
     try {
-      if (!this.apperClient) this.initializeClient();
-      
+      const client = await this.apperClient();
+
       const params = {
         records: [
           {
@@ -220,7 +219,7 @@ class ReviewService {
         ]
       };
 
-      const response = await this.apperClient.createRecord("product_review_c", params);
+      const response = await client.createRecord("product_review_c", params);
 
       if (!response.success) {
         console.error(response.message);
@@ -230,7 +229,7 @@ class ReviewService {
       if (response.results) {
         const successful = response.results.filter(r => r.success);
         const failed = response.results.filter(r => !r.success);
-        
+
         if (failed.length > 0) {
           console.error(`Failed to create ${failed.length} reviews:`, failed);
           failed.forEach(record => {
@@ -248,8 +247,8 @@ class ReviewService {
 
   async update(id, reviewData) {
     try {
-      if (!this.apperClient) this.initializeClient();
-      
+      const client = await this.apperClient();
+
       const params = {
         records: [
           {
@@ -259,7 +258,7 @@ class ReviewService {
         ]
       };
 
-      const response = await this.apperClient.updateRecord("product_review_c", params);
+      const response = await client.updateRecord("product_review_c", params);
 
       if (!response.success) {
         console.error(response.message);
@@ -269,7 +268,7 @@ class ReviewService {
       if (response.results) {
         const successful = response.results.filter(r => r.success);
         const failed = response.results.filter(r => !r.success);
-        
+
         if (failed.length > 0) {
           console.error(`Failed to update ${failed.length} reviews:`, failed);
           failed.forEach(record => {
@@ -287,13 +286,13 @@ class ReviewService {
 
   async delete(id) {
     try {
-      if (!this.apperClient) this.initializeClient();
-      
-      const params = { 
+      const client = await this.apperClient();
+
+      const params = {
         RecordIds: [parseInt(id)]
       };
 
-      const response = await this.apperClient.deleteRecord("product_review_c", params);
+      const response = await client.deleteRecord("product_review_c", params);
 
       if (!response.success) {
         console.error(response.message);
@@ -303,7 +302,7 @@ class ReviewService {
       if (response.results) {
         const successful = response.results.filter(r => r.success);
         const failed = response.results.filter(r => !r.success);
-        
+
         if (failed.length > 0) {
           console.error(`Failed to delete ${failed.length} reviews:`, failed);
           failed.forEach(record => {

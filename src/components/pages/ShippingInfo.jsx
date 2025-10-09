@@ -19,7 +19,7 @@ import { toast } from 'react-toastify';
 const ShippingInfo = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const { cartItems } = useCart();
+  const { cartItems, isCartLoading } = useCart();
   const {
     sessionId,
     shippingInfo,
@@ -31,6 +31,9 @@ const ShippingInfo = () => {
   const [formData, setFormData] = useState(shippingInfo);
 
   useEffect(() => {
+    // Wait for cart to load before checking if it's empty
+    if (isCartLoading) return;
+
     // Redirect if no cart items or session
     if (cartItems.length === 0) {
       navigate('/', { replace: true });
@@ -44,7 +47,7 @@ const ShippingInfo = () => {
 
     // Clear any existing validation errors
     dispatch(clearValidation());
-  }, [cartItems.length, sessionId, dispatch, navigate]);
+  }, [cartItems.length, sessionId, dispatch, navigate, isCartLoading]);
 
   const handleInputChange = (field, value) => {
     setFormData(prev => ({
@@ -142,6 +145,16 @@ if (formData.phoneNumber && !/^[\d\s\-()+ ]{10,}$/.test(formData.phoneNumber.rep
   const handleBackToCart = () => {
     navigate('/checkout/cart-review');
   };
+
+  // Show loading while cart is loading
+  if (isCartLoading) {
+    return (
+      <div className="flex justify-center items-center py-12">
+        <Loading />
+        <p className="ml-3 text-secondary">Loading cart...</p>
+      </div>
+    );
+  }
 
   if (loading && !formData.firstName) {
     return (

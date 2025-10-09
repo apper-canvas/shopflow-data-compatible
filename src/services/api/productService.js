@@ -1,41 +1,41 @@
+import { getApperClient } from '@/services/apperClient';
+
 class ProductService {
   constructor() {
-    this.apperClient = null;
+    // No longer need to manage client instance
   }
 
-initializeClient() {
-    if (!this.apperClient) {
-      const { ApperClient } = window.ApperSDK;
-      this.apperClient = new ApperClient({
-        apperProjectId: import.meta.env.VITE_APPER_PROJECT_ID,
-        apperPublicKey: import.meta.env.VITE_APPER_PUBLIC_KEY
-      });
+  async apperClient() {
+    const client = await getApperClient();
+    if (!client) {
+      throw new Error('ApperSDK not initialized. Please ensure the SDK is loaded.');
     }
+    return client;
   }
 
   async getAll(filters = {}) {
     try {
-      if (!this.apperClient) this.initializeClient();
-      
+      const client = await this.apperClient();
+
       const params = {
         fields: [
-          {"field": {"Name": "Name"}},
-          {"field": {"Name": "title_c"}},
-          {"field": {"Name": "price_c"}},
-          {"field": {"Name": "image_c"}},
-          {"field": {"Name": "description_c"}},
-          {"field": {"Name": "category_c"}},
-          {"field": {"Name": "in_stock_c"}},
-          {"field": {"Name": "discount_percentage_c"}},
-          {"field": {"Name": "is_on_sale_c"}},
-          {"field": {"Name": "Tags"}},
-          {"field": {"Name": "CreatedOn"}}
+          { "field": { "Name": "Name" } },
+          { "field": { "Name": "title_c" } },
+          { "field": { "Name": "price_c" } },
+          { "field": { "Name": "image_c" } },
+          { "field": { "Name": "description_c" } },
+          { "field": { "Name": "category_c" } },
+          { "field": { "Name": "in_stock_c" } },
+          { "field": { "Name": "discount_percentage_c" } },
+          { "field": { "Name": "is_on_sale_c" } },
+          { "field": { "Name": "Tags" } },
+          { "field": { "Name": "CreatedOn" } }
         ],
         pagingInfo: { limit: filters.limit || 50, offset: filters.offset || 0 }
       };
 
       if (filters.category) {
-        params.where = [{"FieldName": "category_c", "Operator": "ExactMatch", "Values": [filters.category]}];
+        params.where = [{ "FieldName": "category_c", "Operator": "ExactMatch", "Values": [filters.category] }];
       }
 
       if (filters.search) {
@@ -43,18 +43,18 @@ initializeClient() {
           operator: "OR",
           subGroups: [{
             conditions: [
-              {"fieldName": "title_c", "operator": "Contains", "values": [filters.search]},
-              {"fieldName": "description_c", "operator": "Contains", "values": [filters.search]}
+              { "fieldName": "title_c", "operator": "Contains", "values": [filters.search] },
+              { "fieldName": "description_c", "operator": "Contains", "values": [filters.search] }
             ]
           }]
         }];
       }
 
       if (filters.orderBy) {
-        params.orderBy = [{"fieldName": filters.orderBy, "sorttype": filters.sortDirection || "ASC"}];
+        params.orderBy = [{ "fieldName": filters.orderBy, "sorttype": filters.sortDirection || "ASC" }];
       }
 
-      const response = await this.apperClient.fetchRecords("product_c", params);
+      const response = await client.fetchRecords("product_c", params);
 
       if (!response.success) {
         console.error("Error fetching products:", response.message);
@@ -83,26 +83,26 @@ initializeClient() {
 
   async getById(id) {
     try {
-      if (!this.apperClient) this.initializeClient();
-      
+      const client = await this.apperClient();
+
       const params = {
         fields: [
-          {"field": {"Name": "Name"}},
-          {"field": {"Name": "title_c"}},
-          {"field": {"Name": "price_c"}},
-          {"field": {"Name": "image_c"}},
-          {"field": {"Name": "description_c"}},
-          {"field": {"Name": "category_c"}},
-          {"field": {"Name": "in_stock_c"}},
-          {"field": {"Name": "discount_percentage_c"}},
-          {"field": {"Name": "is_on_sale_c"}},
-          {"field": {"Name": "Tags"}},
-          {"field": {"Name": "CreatedOn"}},
-          {"field": {"Name": "ModifiedOn"}}
+          { "field": { "Name": "Name" } },
+          { "field": { "Name": "title_c" } },
+          { "field": { "Name": "price_c" } },
+          { "field": { "Name": "image_c" } },
+          { "field": { "Name": "description_c" } },
+          { "field": { "Name": "category_c" } },
+          { "field": { "Name": "in_stock_c" } },
+          { "field": { "Name": "discount_percentage_c" } },
+          { "field": { "Name": "is_on_sale_c" } },
+          { "field": { "Name": "Tags" } },
+          { "field": { "Name": "CreatedOn" } },
+          { "field": { "Name": "ModifiedOn" } }
         ]
       };
 
-      const response = await this.apperClient.getRecordById("product_c", parseInt(id), params);
+      const response = await client.getRecordById("product_c", parseInt(id), params);
 
       if (!response.success) {
         console.error("Error fetching product:", response.message);
@@ -137,8 +137,8 @@ initializeClient() {
 
   async create(productData) {
     try {
-      if (!this.apperClient) this.initializeClient();
-      
+      const client = await this.apperClient();
+
       // Only include Updateable fields
       const params = {
         records: [{
@@ -155,7 +155,7 @@ initializeClient() {
         }]
       };
 
-      const response = await this.apperClient.createRecord("product_c", params);
+      const response = await client.createRecord("product_c", params);
 
       if (!response.success) {
         console.error("Error creating product:", response.message);
@@ -165,14 +165,14 @@ initializeClient() {
       if (response.results && response.results.length > 0) {
         const successful = response.results.filter(r => r.success);
         const failed = response.results.filter(r => !r.success);
-        
+
         if (failed.length > 0) {
           console.error(`Failed to create ${failed.length} products:`, failed);
           failed.forEach(record => {
             if (record.message) throw new Error(record.message);
           });
         }
-        
+
         if (successful.length > 0) {
           return successful[0].data;
         }
@@ -188,8 +188,8 @@ initializeClient() {
 
   async update(id, productData) {
     try {
-      if (!this.apperClient) this.initializeClient();
-      
+      const client = await this.apperClient();
+
       // Only include Updateable fields
       const params = {
         records: [{
@@ -207,7 +207,7 @@ initializeClient() {
         }]
       };
 
-      const response = await this.apperClient.updateRecord("product_c", params);
+      const response = await client.updateRecord("product_c", params);
 
       if (!response.success) {
         console.error("Error updating product:", response.message);
@@ -217,14 +217,14 @@ initializeClient() {
       if (response.results && response.results.length > 0) {
         const successful = response.results.filter(r => r.success);
         const failed = response.results.filter(r => !r.success);
-        
+
         if (failed.length > 0) {
           console.error(`Failed to update ${failed.length} products:`, failed);
           failed.forEach(record => {
             if (record.message) throw new Error(record.message);
           });
         }
-        
+
         if (successful.length > 0) {
           return successful[0].data;
         }
@@ -240,13 +240,13 @@ initializeClient() {
 
   async delete(id) {
     try {
-      if (!this.apperClient) this.initializeClient();
-      
-      const params = { 
+      const client = await this.apperClient();
+
+      const params = {
         RecordIds: [parseInt(id)]
       };
 
-      const response = await this.apperClient.deleteRecord("product_c", params);
+      const response = await client.deleteRecord("product_c", params);
 
       if (!response.success) {
         console.error("Error deleting product:", response.message);
@@ -256,7 +256,7 @@ initializeClient() {
       if (response.results && response.results.length > 0) {
         const successful = response.results.filter(r => r.success);
         const failed = response.results.filter(r => !r.success);
-        
+
         if (failed.length > 0) {
           console.error(`Failed to delete ${failed.length} products:`, failed);
           failed.forEach(record => {
@@ -264,7 +264,7 @@ initializeClient() {
           });
           return false;
         }
-        
+
         return successful.length > 0;
       }
 
@@ -280,7 +280,7 @@ initializeClient() {
     try {
       // Simulate API delay
       await new Promise(resolve => setTimeout(resolve, 300))
-      
+
       // Mock featured products data
       const allProducts = [
         {
@@ -416,10 +416,10 @@ initializeClient() {
           category: "Fitness"
         }
       ]
-      
+
       // Return limited number of products
       return allProducts.slice(0, limit)
-      
+
     } catch (error) {
       console.error("Error fetching featured products:", error)
       throw new Error("Failed to load featured products")
@@ -427,22 +427,22 @@ initializeClient() {
   }
   async getReviewStatsForProducts(productIds) {
     try {
-      if (!this.apperClient) this.initializeClient();
+      const client = await this.apperClient();
       if (!productIds?.length) return {};
-      
+
       const params = {
         fields: [
-          {"field": {"Name": "product_id_c"}},
-          {"field": {"Name": "rating_c"}}
+          { "field": { "Name": "product_id_c" } },
+          { "field": { "Name": "rating_c" } }
         ],
-        where: [{"FieldName": "product_id_c", "Operator": "ExactMatch", "Values": productIds}],
-        pagingInfo: {"limit": 1000, "offset": 0}
+        where: [{ "FieldName": "product_id_c", "Operator": "ExactMatch", "Values": productIds }],
+        pagingInfo: { "limit": 1000, "offset": 0 }
       };
 
-      const response = await this.apperClient.fetchRecords("product_review_c", params);
-      
+      const response = await client.fetchRecords("product_review_c", params);
+
       const stats = {};
-      
+
       if (response?.data) {
         // Group reviews by product ID
         const reviewsByProduct = {};
@@ -458,10 +458,10 @@ initializeClient() {
         Object.keys(reviewsByProduct).forEach(productId => {
           const ratings = reviewsByProduct[productId];
           const reviewCount = ratings.length;
-          const averageRating = reviewCount > 0 
+          const averageRating = reviewCount > 0
             ? ratings.reduce((sum, rating) => sum + rating, 0) / reviewCount
             : 0;
-          
+
           stats[productId] = {
             averageRating,
             reviewCount
@@ -486,7 +486,7 @@ initializeClient() {
   getCategories() {
     return [
       "Electronics",
-      "Clothing", 
+      "Clothing",
       "Home & Kitchen",
       "Sports",
       "Books",
