@@ -145,9 +145,9 @@ export default function Root() {
 
   return (
     <AuthContext.Provider value={{ logout, isInitialized: authInitialized }}>
-      <div style={{ background: 'yellow', padding: '4px', fontSize: '12px' }}>
+      {/* <div style={{ background: 'yellow', padding: '4px', fontSize: '12px' }}>
         Auth: {isInitialized ? 'Ready' : 'Loading'} | User: {user ? 'Logged In' : 'Guest'}
-      </div>
+      </div> */}
       <Outlet />
     </AuthContext.Provider>
   );

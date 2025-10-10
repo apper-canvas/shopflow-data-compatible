@@ -189,7 +189,7 @@
                     },
                     {
                         "label": "Role must be Admin",
-                        "rule": "accounts[0].profile.name == 'CEO'"
+                        "rule": "emailAddress == \"vivek.gotraj@companyhub.com\""
                     }
                 ],
                 "operator": "AND"
