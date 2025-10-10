@@ -23,7 +23,11 @@ export const getRouteConfig = (path) => {
 
     return matches[0]?.config || {
         allow: {
-            conditions: [{ label: "User must be logged in", rule: "authenticated" }]
+            when: {
+                conditions: [{ label: "User must be logged in", rule: "authenticated" }],
+                operator: "AND"
+            },
+            redirectOnDeny: "/login"
         }
     };
 };
@@ -88,34 +92,41 @@ function evaluateRule(rule, user) {
     if (rule === "public") return true;
     if (rule === "authenticated") return !!user;
 
-    // Field equality pattern: field:value
-    if (rule.includes(":")) {
-        if (!user) return false;
+    return evaluateDynamicRule(rule, user);
+}
 
-        const [field, value] = rule.split(":");
+function evaluateDynamicRule(rule, user) {
+    if (!user) return false;
 
-        // Handle array fields (roles, teams, permissions)
-        if (field === "role" || field === "roles") {
-            const userRoles = user.roles || [];
-            return userRoles.includes(value);
-        }
+    try {
+        // Dynamically extract all keys and values from user object
+        const contextKeys = Object.keys(user);
+        const contextValues = Object.values(user);
 
-        // Handle external user check
-        if (field === "external") {
-            const isExternal = user.userMetadata?.isExternal;
-            const expectedValue = value === "true" || value === true;
-            return isExternal === expectedValue;
-        }
+        // Wrap expression in return statement if not already present
+        const wrappedRule = rule.trim().startsWith('return')
+            ? rule
+            : `return (${rule})`;
 
-        // Direct field comparison
-        return user[field] === value;
+        // Create function with all user properties as parameters
+        const func = new Function(...contextKeys, wrappedRule);
+
+        // Execute function with user values
+        const result = func(...contextValues);
+
+        // Ensure boolean result
+        return Boolean(result);
+
+    } catch (error) {
+        console.error('Error evaluating rule:', rule, error);
+        return false;
     }
-
-    return false;
 }
 
 export function verifyRouteAccess(config, user) {
-    const { conditions = [], operator = "AND" } = config;
+    // Extract the when clause, supporting both old and new structure for backward compatibility
+    const whenClause = config.when || config;
+    const { conditions = [], operator = "AND" } = whenClause;
 
     // Evaluate all conditions
     const results = conditions.map(cond => ({
@@ -134,8 +145,8 @@ export function verifyRouteAccess(config, user) {
     // Determine redirect
     let redirectTo = null;
     if (!allowed) {
-        const needsAuth = failed.some(f => f.rule === "authenticated");
-        redirectTo = (!user || needsAuth) ? "/login" : "/error?message=insufficient_permissions";
+        // Use config's redirectOnDeny if available, otherwise redirect to login
+        redirectTo = config.redirectOnDeny || "/login";
     }
 
     return {
