@@ -1,5 +1,12 @@
 import routeConfig from "./routes.json";
 
+// Custom authorization functions registry
+const customFunctions = {
+    isCEO: (user) => {
+        return user && user.accounts[0].profile.name === 'CEO';
+    }
+};
+
 // Get route configuration with pattern matching
 export const getRouteConfig = (path) => {
     // Normalize the path
@@ -116,6 +123,23 @@ function evaluateDynamicRule(rule, user) {
     }
 }
 
+// Helper to execute custom function
+function executeCustomFunction(functionName, user) {
+    const func = customFunctions[functionName];
+
+    if (!func) {
+        console.error(`Custom function "${functionName}" not found`);
+        return false;
+    }
+
+    try {
+        return Boolean(func(user));
+    } catch (error) {
+        console.error(`Error executing custom function "${functionName}":`, error);
+        return false;
+    }
+}
+
 export function verifyRouteAccess(config, user) {
     // If no config exists, allow access (let React Router handle it)
     if (!config) {
@@ -126,7 +150,18 @@ export function verifyRouteAccess(config, user) {
         };
     }
 
-    // Extract the when clause, supporting both old and new structure for backward compatibility
+    // If custom function is specified, use it instead of when conditions
+    if (config.function) {
+        const allowed = executeCustomFunction(config.function, user);
+
+        return {
+            allowed,
+            redirectTo: allowed ? null : (config.redirectOnDeny || "/login"),
+            failed: allowed ? [] : [`Custom function "${config.function}" failed`]
+        };
+    }
+
+    // Otherwise, use the when conditions as before
     const whenClause = config.when || config;
     const { conditions = [], operator = "AND" } = whenClause;
 

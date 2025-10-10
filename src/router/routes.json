@@ -181,19 +181,7 @@
     },
     "/admin/*": {
         "allow": {
-            "when": {
-                "conditions": [
-                    {
-                        "label": "User must be logged in",
-                        "rule": "authenticated"
-                    },
-                    {
-                        "label": "Role must be Admin",
-                        "rule": "emailAddress == \"vivek.gotraj@companyhub.com\""
-                    }
-                ],
-                "operator": "AND"
-            },
+            "function": "isCEO",
             "redirectOnDeny": "/error?message=admin_access_required"
         }
     },
