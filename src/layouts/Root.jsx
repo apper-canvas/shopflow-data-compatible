@@ -41,16 +41,21 @@ export default function Root() {
   }, []);
 
   useEffect(() => {
-    if (isInitialized) {
-      const config = getRouteConfig(location.pathname);
+    // Guard: exit early if not initialized
+    if (!isInitialized) return;
 
-      const { allowed, redirectTo } = verifyRouteAccess(config.allow, user);
+    const config = getRouteConfig(location.pathname);
 
-      if (!allowed && redirectTo) {
-        const redirectPath = location.pathname + location.search;
-        navigate(`${redirectTo}?redirect=${encodeURIComponent(redirectPath)}`, { replace: true });
-      }
-    }
+    // Guard: exit early if no config or no allow rules
+    if (!config?.allow) return;
+
+    const { allowed, redirectTo } = verifyRouteAccess(config.allow, user);
+
+    // Guard: exit early if access is allowed or no redirect
+    if (allowed || !redirectTo) return;
+
+    const redirectPath = location.pathname + location.search;
+    navigate(`${redirectTo}?redirect=${encodeURIComponent(redirectPath)}`, { replace: true });
   }, [isInitialized, user, location.pathname, location.search, navigate]);
 
   const initializeAuth = async () => {

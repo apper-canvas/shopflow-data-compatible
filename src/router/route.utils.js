@@ -21,15 +21,8 @@ export const getRouteConfig = (path) => {
         }))
         .sort((a, b) => b.specificity - a.specificity);
 
-    return matches[0]?.config || {
-        allow: {
-            when: {
-                conditions: [{ label: "User must be logged in", rule: "authenticated" }],
-                operator: "AND"
-            },
-            redirectOnDeny: "/login"
-        }
-    };
+    // Return null for unmatched routes to let React Router handle them naturally
+    return matches[0]?.config || null;
 };
 
 // Pattern matching logic
@@ -124,6 +117,15 @@ function evaluateDynamicRule(rule, user) {
 }
 
 export function verifyRouteAccess(config, user) {
+    // If no config exists, allow access (let React Router handle it)
+    if (!config) {
+        return {
+            allowed: true,
+            redirectTo: null,
+            failed: []
+        };
+    }
+
     // Extract the when clause, supporting both old and new structure for backward compatibility
     const whenClause = config.when || config;
     const { conditions = [], operator = "AND" } = whenClause;
