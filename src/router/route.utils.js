@@ -163,7 +163,7 @@ export function verifyRouteAccess(config, user) {
 
     // Otherwise, use the when conditions as before
     const whenClause = config.when || config;
-    const { conditions = [], operator = "AND" } = whenClause;
+    const { conditions = [], operator = "OR" } = whenClause;
 
     // Evaluate all conditions
     const results = conditions.map(cond => ({
