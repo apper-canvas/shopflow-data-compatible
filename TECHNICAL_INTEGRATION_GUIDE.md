@@ -752,17 +752,37 @@ src/
 
 ### File Structure
 
+There are two approaches to define access control:
+
+#### Approach 1: When Conditions (Inline Rules)
+
 ```json
 {
   "/path": {
     "allow": {
-      "conditions": [
-        {
-          "label": "Human-readable description",
-          "rule": "actual_rule"
-        }
-      ],
-      "operator": "AND"
+      "when": {
+        "conditions": [
+          {
+            "label": "Human-readable description",
+            "rule": "actual_rule"
+          }
+        ],
+        "operator": "AND"
+      },
+      "redirectOnDeny": "/custom/redirect/path"
+    }
+  }
+}
+```
+
+#### Approach 2: Custom Function (Reusable Logic)
+
+```json
+{
+  "/path": {
+    "allow": {
+      "function": "customFunctionName",
+      "redirectOnDeny": "/custom/redirect/path"
     }
   }
 }
@@ -770,11 +790,14 @@ src/
 
 **Properties:**
 - **`/path`** - Route pattern (exact, parameter, or wildcard)
-- **`allow`** - Access configuration
+- **`allow`** - Access configuration object
+- **`when`** - Contains conditions for inline rule evaluation
 - **`conditions`** - Array of rules to check
 - **`label`** - Description for errors/debugging
-- **`rule`** - The actual access rule
+- **`rule`** - The actual access rule (JavaScript expression or built-in)
 - **`operator`** - `"AND"` (default) or `"OR"`
+- **`function`** - Name of registered custom function (alternative to `when`)
+- **`redirectOnDeny`** - Custom redirect path when access is denied (optional, defaults to `/login`)
 
 ---
 
@@ -787,7 +810,9 @@ src/
 {
   "/": {
     "allow": {
-      "conditions": [{"label": "Home is public", "rule": "public"}]
+      "when": {
+        "conditions": [{"label": "Home is public", "rule": "public"}]
+      }
     }
   }
 }
@@ -798,130 +823,187 @@ src/
 {
   "/dashboard": {
     "allow": {
-      "conditions": [{"label": "Must be logged in", "rule": "authenticated"}]
+      "when": {
+        "conditions": [{"label": "Must be logged in", "rule": "authenticated"}]
+      },
+      "redirectOnDeny": "/login"
     }
   }
 }
 ```
 
-#### 2. Custom Rules - Extensible Pattern System
+#### 2. JavaScript Expression Rules
 
-**Important:** The rule system is **fully extensible**. You can create ANY custom pattern you want. The current implementation uses `:` for field equality, but you can design your own patterns with different syntax and logic.
+**Important:** The rule system uses **JavaScript expressions** for maximum flexibility. Any valid JavaScript expression that evaluates to a boolean can be used as a rule.
 
-All custom rule logic is handled in `evaluateRule()` function in `route.utils.js`.
+**How it works:**
+- All user object properties are available as variables in your expression
+- The expression is evaluated using `new Function()` with user properties as context
+- Return value is coerced to boolean
 
 ---
 
-##### Current Implementation: Field Equality Pattern (`:` separator)
+##### JavaScript Expression Examples
 
-This is the **current pattern** used in this project, but it's just one example:
-
-**`role:value`** - Check roles array
+**Check email address:**
 ```json
 {
   "/admin": {
     "allow": {
-      "conditions": [
-        {"label": "Must be logged in", "rule": "authenticated"},
-        {"label": "Must be admin", "rule": "role:admin"}
-      ],
-      "operator": "AND"
+      "when": {
+        "conditions": [
+          {"label": "User must be logged in", "rule": "authenticated"},
+          {"label": "Must be admin email", "rule": "emailAddress == \"admin@example.com\""}
+        ],
+        "operator": "AND"
+      },
+      "redirectOnDeny": "/error?message=admin_access_required"
     }
   }
 }
 ```
-Checks: `user.roles.includes("admin")`
 
-**`plan:value`** - Check plan field
+**Check nested object property:**
 ```json
 {
-  "/premium/*": {
+  "/admin/**/*": {
     "allow": {
-      "conditions": [{"label": "Premium required", "rule": "plan:premium"}]
+      "when": {
+        "conditions": [
+          {"label": "User must be logged in", "rule": "authenticated"},
+          {"label": "Must be CEO", "rule": "accounts[0].profile.name == 'CEO'"}
+        ],
+        "operator": "AND"
+      },
+      "redirectOnDeny": "/error?message=admin_access_required"
     }
   }
 }
 ```
-Checks: `user.plan === "premium"`
 
-**`external:true`** - Check external user
+**Check user metadata:**
 ```json
 {
   "/external": {
     "allow": {
-      "conditions": [{"label": "External user only", "rule": "external:true"}]
+      "when": {
+        "conditions": [
+          {"label": "Must be external user", "rule": "userMetadata.isExternal"}
+        ]
+      },
+      "redirectOnDeny": "/error?message=internal_users_only"
     }
   }
 }
 ```
-Checks: `user.userMetadata?.isExternal === true`
 
-**`field:value`** - Generic field check
+**Complex boolean logic:**
 ```json
 {
   "/beta": {
     "allow": {
-      "conditions": [{"label": "Beta tester", "rule": "betaTester:true"}]
+      "when": {
+        "conditions": [
+          {"label": "Beta access", "rule": "betaTester || roles && roles.includes('admin')"}
+        ]
+      }
     }
   }
 }
 ```
-Checks: `user[field] === value`
+
+**Array operations:**
+```json
+{
+  "/moderators": {
+    "allow": {
+      "when": {
+        "conditions": [
+          {"label": "Has moderator role", "rule": "roles && roles.includes('moderator')"}
+        ]
+      }
+    }
+  }
+}
+```
 
 ---
 
-##### Want More Custom Patterns?
+##### Available Context in Rules
 
-You can create your own patterns with different separators:
+When writing JavaScript expressions, all user object properties are available as variables:
 
-**Examples:**
-- `age-18-65` - Check age range
-- `role|admin|moderator` - User has ANY of these roles
-- `permissions@create_user` - Array contains check
-- `credits>100` - Numeric comparison
-- `has_completed_onboarding` - Custom function
-
-Just add your logic to `evaluateRule()` function in `route.utils.js`.
-
----
-
-##### How to Add Custom Patterns
-
-**Simple example** - Add team-based access:
-
+**Example user object:**
 ```javascript
-function evaluateRule(rule, user) {
-    // Built-in rules
-    if (rule === "public") return true;
-    if (rule === "authenticated") return !!user;
-    
-    if (!user) return false;
-    
-    // YOUR CUSTOM PATTERN
-    if (rule.startsWith("team:")) {
-        const teamName = rule.split(":")[1];
-        return user.teams?.includes(teamName);
+{
+  id: "user123",
+  emailAddress: "john@example.com",
+  roles: ["user", "moderator"],
+  accounts: [
+    {
+      profile: {
+        name: "John Doe",
+        avatar: "..."
+      }
     }
-    
-    // Existing : pattern logic...
-    if (rule.includes(":")) {
-        // role:admin, plan:premium, etc.
-    }
-    
-    return false;
+  ],
+  userMetadata: {
+    isExternal: false,
+    betaTester: true
+  }
 }
 ```
 
-Then use in routes.json:
+**Available variables in rules:**
+- `id`
+- `emailAddress`
+- `roles`
+- `accounts`
+- `userMetadata`
+- Any other property in the user object
+
+#### 3. Custom Functions (Reusable Logic)
+
+For complex or reusable authorization logic, use custom functions instead of inline expressions.
+
+**Define in `route.utils.js`:**
+```javascript
+const customFunctions = {
+    isCEO: (user) => {
+        return user && user.accounts[0].profile.name === 'CEO';
+    },
+    hasMinimumCredits: (user) => {
+        return user && user.credits >= 100;
+    },
+    isTeamMember: (user) => {
+        return user && user.teams?.includes('engineering');
+    }
+};
+```
+
+**Use in `routes.json`:**
 ```json
 {
-  "/beta": {
+  "/admin/*": {
     "allow": {
-      "conditions": [{"rule": "team:engineering"}]
+      "function": "isCEO",
+      "redirectOnDeny": "/error?message=admin_access_required"
+    }
+  },
+  "/premium-features": {
+    "allow": {
+      "function": "hasMinimumCredits",
+      "redirectOnDeny": "/upgrade"
     }
   }
 }
 ```
+
+**When to use custom functions:**
+- Complex logic that's hard to read as inline expressions
+- Reusable logic across multiple routes
+- Logic requiring try-catch error handling
+- Better performance for expensive computations (can add caching)
 
 ---
 
@@ -939,16 +1021,36 @@ Then use in routes.json:
 {
   "/admin": {
     "allow": {
-      "conditions": [
-        {"rule": "authenticated"},
-        {"rule": "role:admin"}
-      ],
-      "operator": "AND"
+      "when": {
+        "conditions": [
+          {"label": "Must be logged in", "rule": "authenticated"},
+          {"label": "Must be admin", "rule": "emailAddress == \"admin@example.com\""}
+        ],
+        "operator": "AND"
+      }
     }
   }
 }
 ```
 Only admin users who are logged in can access.
+
+**OR** - At least one condition must pass:
+```json
+{
+  "/beta": {
+    "allow": {
+      "when": {
+        "conditions": [
+          {"label": "Is beta tester", "rule": "userMetadata.betaTester"},
+          {"label": "Is admin", "rule": "roles && roles.includes('admin')"}
+        ],
+        "operator": "OR"
+      }
+    }
+  }
+}
+```
+Beta testers OR admins can access.
 
 ---
 
@@ -1011,16 +1113,28 @@ Matches:
 ```json
 {
   "// PUBLIC ROUTES (most specific first)": {},
-  "/": {"allow": {"conditions": [{"rule": "public"}]}},
-  "/login": {"allow": {"conditions": [{"rule": "public"}]}},
+  "/": {"allow": {"when": {"conditions": [{"rule": "public"}]}}},
+  "/login": {"allow": {"when": {"conditions": [{"rule": "public"}]}}},
   
   "// AUTHENTICATED ROUTES": {},
-  "/dashboard": {"allow": {"conditions": [{"rule": "authenticated"}]}},
+  "/dashboard": {"allow": {"when": {"conditions": [{"rule": "authenticated"}]}}},
   
   "// ADMIN ROUTES (exact before wildcards)": {},
-  "/admin": {"allow": {"conditions": [{"rule": "role:admin"}]}},
-  "/admin/*": {"allow": {"conditions": [{"rule": "role:admin"}]}},
-  "/admin/**/*": {"allow": {"conditions": [{"rule": "role:admin"}]}}
+  "/admin": {
+    "allow": {
+      "when": {"conditions": [{"rule": "emailAddress == \"admin@example.com\""}]}
+    }
+  },
+  "/admin/*": {
+    "allow": {
+      "function": "isCEO"
+    }
+  },
+  "/admin/**/*": {
+    "allow": {
+      "when": {"conditions": [{"rule": "roles && roles.includes('admin')"}]}
+    }
+  }
 }
 ```
 
@@ -1038,29 +1152,45 @@ Matches:
 ```json
 {
   "// PUBLIC ROUTES": {},
-  "/": {"allow": {"conditions": [{"rule": "public"}]}},
-  "/login": {"allow": {"conditions": [{"rule": "public"}]}},
-  "/signup": {"allow": {"conditions": [{"rule": "public"}]}},
+  "/": {"allow": {"when": {"conditions": [{"rule": "public"}]}}},
+  "/login": {"allow": {"when": {"conditions": [{"rule": "public"}]}}},
+  "/signup": {"allow": {"when": {"conditions": [{"rule": "public"}]}}},
   
   "// AUTHENTICATED ROUTES": {},
-  "/dashboard": {"allow": {"conditions": [{"rule": "authenticated"}]}},
-  "/profile": {"allow": {"conditions": [{"rule": "authenticated"}]}},
+  "/dashboard": {
+    "allow": {
+      "when": {"conditions": [{"rule": "authenticated"}]},
+      "redirectOnDeny": "/login"
+    }
+  },
+  "/profile": {
+    "allow": {
+      "when": {"conditions": [{"rule": "authenticated"}]},
+      "redirectOnDeny": "/login"
+    }
+  },
   
   "// ADMIN ROUTES": {},
   "/admin/*": {
     "allow": {
-      "conditions": [
-        {"rule": "authenticated"},
-        {"rule": "role:admin"}
-      ],
-      "operator": "AND"
+      "when": {
+        "conditions": [
+          {"label": "Must be logged in", "rule": "authenticated"},
+          {"label": "Must be admin", "rule": "emailAddress == \"admin@example.com\""}
+        ],
+        "operator": "AND"
+      },
+      "redirectOnDeny": "/error?message=admin_access_required"
     }
   },
   
   "// PREMIUM ROUTES": {},
   "/premium/*": {
     "allow": {
-      "conditions": [{"rule": "plan:premium"}]
+      "when": {
+        "conditions": [{"label": "Premium plan required", "rule": "plan == 'premium'"}]
+      },
+      "redirectOnDeny": "/upgrade"
     }
   }
 }
@@ -1103,7 +1233,7 @@ Matches:
 2. Check for exact match first
 3. If no match, find all matching patterns
 4. Sort by specificity (highest first)
-5. Return most specific match or default to "authenticated"
+5. Return most specific match or null (let React Router handle 404)
 ```
 
 **Code:**
@@ -1128,12 +1258,8 @@ export const getRouteConfig = (path) => {
         }))
         .sort((a, b) => b.specificity - a.specificity);
 
-    // Return most specific or default
-    return matches[0]?.config || {
-        allow: {
-            conditions: [{ label: "User must be logged in", "rule": "authenticated" }]
-        }
-    };
+    // Return most specific or null (let React Router handle it)
+    return matches[0]?.config || null;
 };
 ```
 
@@ -1148,8 +1274,10 @@ getRouteConfig("/admin/users")
 
 getRouteConfig("/unknown/route")
 // → No matches found
-// → Returns default: {allow: {conditions: [{rule: "authenticated"}]}}
+// → Returns null (React Router will show 404 page naturally)
 ```
+
+**Key Change:** Returns `null` instead of default authenticated config. This allows React Router to handle unmatched routes naturally (404 pages), rather than forcing authentication on every unknown route.
 
 ---
 
@@ -1256,7 +1384,7 @@ getSpecificity("/admin/**/*")    → 111 (multi wildcard)
 
 **Purpose:** Check if a single rule passes for a user
 
-**This is where you add custom patterns!**
+**This handles built-in rules and delegates to dynamic evaluation!**
 
 **Code:**
 ```javascript
@@ -1264,41 +1392,159 @@ function evaluateRule(rule, user) {
     // Built-in rules
     if (rule === "public") return true;
     if (rule === "authenticated") return !!user;
-    
-    if (!user) return false;
 
-    // Custom pattern: field:value
-    if (rule.includes(":")) {
-        const [field, value] = rule.split(":");
-        
-        // Special cases
-        if (field === "role") {
-            return (user.roles || []).includes(value);
-        }
-        if (field === "plan") {
-            return user.plan === value;
-        }
-        if (field === "external") {
-            return user.userMetadata?.isExternal === (value === "true");
-        }
-        
-        // Generic field check
-        return user[field] === value;
-    }
-    
-    return false;
+    // All other rules are JavaScript expressions
+    return evaluateDynamicRule(rule, user);
 }
 ```
 
 **Examples:**
 ```javascript
-evaluateRule("public", null)                    → true
-evaluateRule("authenticated", null)             → false
-evaluateRule("role:admin", {roles: ["admin"]})  → true
-evaluateRule("plan:premium", {plan: "premium"}) → true
+evaluateRule("public", null)                                      → true
+evaluateRule("authenticated", null)                               → false
+evaluateRule("authenticated", {id: 123})                          → true
+evaluateRule("emailAddress == \"admin@example.com\"", user)       → true/false
+evaluateRule("roles && roles.includes('admin')", user)            → true/false
+evaluateRule("accounts[0].profile.name == 'CEO'", user)           → true/false
 ```
 
-**Want more patterns?** Add your own logic here! See custom pattern examples in routes.json section above.
+---
+
+### Function 4a: evaluateDynamicRule(rule, user)
+
+**Purpose:** Evaluate JavaScript expressions as rules
+
+**This is the magic that makes JavaScript expressions work!**
+
+**Code:**
+```javascript
+function evaluateDynamicRule(rule, user) {
+    if (!user) return false;
+
+    try {
+        // Dynamically extract all keys and values from user object
+        const contextKeys = Object.keys(user);
+        const contextValues = Object.values(user);
+
+        // Wrap expression in return statement if not already present
+        const wrappedRule = rule.trim().startsWith('return')
+            ? rule
+            : `return (${rule})`;
+
+        // Create function with all user properties as parameters
+        const func = new Function(...contextKeys, wrappedRule);
+
+        // Execute function with user values
+        const result = func(...contextValues);
+
+        // Ensure boolean result
+        return Boolean(result);
+
+    } catch (error) {
+        console.error('Error evaluating rule:', rule, error);
+        return false;
+    }
+}
+```
+
+**How it works:**
+
+1. **Extract user properties**: Gets all keys and values from user object
+2. **Wrap rule**: Adds `return` statement if missing
+3. **Create dynamic function**: Uses `new Function()` with user properties as parameters
+4. **Execute**: Calls function with user values
+5. **Return boolean**: Ensures result is boolean
+
+**Example flow:**
+```javascript
+// Rule: "emailAddress == \"admin@example.com\""
+// User: { id: 123, emailAddress: "admin@example.com", roles: ["admin"] }
+
+// Step 1: Extract
+contextKeys = ["id", "emailAddress", "roles"]
+contextValues = [123, "admin@example.com", ["admin"]]
+
+// Step 2: Wrap
+wrappedRule = "return (emailAddress == \"admin@example.com\")"
+
+// Step 3: Create function
+func = new Function("id", "emailAddress", "roles", 
+                    "return (emailAddress == \"admin@example.com\")")
+
+// Step 4: Execute
+result = func(123, "admin@example.com", ["admin"])
+// Inside function: emailAddress is "admin@example.com", so returns true
+
+// Step 5: Return
+return true
+```
+
+**Security Note:** The `new Function()` approach evaluates user-defined expressions. In this implementation, the expressions come from `routes.json` which is part of your codebase (not user input from end-users), so it's safe. Never evaluate expressions from untrusted sources.
+
+**Error Handling:** If expression fails (syntax error, undefined property, etc.), it logs error and returns `false` (denies access).
+
+---
+
+### Function 4b: executeCustomFunction(functionName, user)
+
+**Purpose:** Execute registered custom functions for complex reusable logic
+
+**Code:**
+```javascript
+// Custom functions registry at top of file
+const customFunctions = {
+    isCEO: (user) => {
+        return user && user.accounts[0].profile.name === 'CEO';
+    }
+};
+
+// Helper to execute custom function
+function executeCustomFunction(functionName, user) {
+    const func = customFunctions[functionName];
+
+    if (!func) {
+        console.error(`Custom function "${functionName}" not found`);
+        return false;
+    }
+
+    try {
+        return Boolean(func(user));
+    } catch (error) {
+        console.error(`Error executing custom function "${functionName}":`, error);
+        return false;
+    }
+}
+```
+
+**How it works:**
+
+1. **Look up function**: Finds function in `customFunctions` registry
+2. **Error if not found**: Logs error and denies access
+3. **Execute function**: Calls function with user object
+4. **Return boolean**: Coerces result to boolean
+
+**Example:**
+```javascript
+// In routes.json
+{
+  "/admin/*": {
+    "allow": {
+      "function": "isCEO"
+    }
+  }
+}
+
+// Execution
+executeCustomFunction("isCEO", user)
+// → Calls customFunctions.isCEO(user)
+// → Returns true if user.accounts[0].profile.name === 'CEO'
+```
+
+**When to use custom functions:**
+- Complex logic that spans multiple conditions
+- Reusable logic across multiple routes
+- Logic requiring try-catch or external calls
+- Better performance (can add memoization/caching)
 
 ---
 
@@ -1309,7 +1555,29 @@ evaluateRule("plan:premium", {plan: "premium"}) → true
 **Code:**
 ```javascript
 export function verifyRouteAccess(config, user) {
-    const { conditions = [], operator = "AND" } = config;
+    // If no config exists, allow access (let React Router handle it)
+    if (!config) {
+        return {
+            allowed: true,
+            redirectTo: null,
+            failed: []
+        };
+    }
+
+    // If custom function is specified, use it instead of when conditions
+    if (config.function) {
+        const allowed = executeCustomFunction(config.function, user);
+
+        return {
+            allowed,
+            redirectTo: allowed ? null : (config.redirectOnDeny || "/login"),
+            failed: allowed ? [] : [`Custom function "${config.function}" failed`]
+        };
+    }
+
+    // Otherwise, use the when conditions as before
+    const whenClause = config.when || config;
+    const { conditions = [], operator = "AND" } = whenClause;
 
     // Evaluate all conditions
     const results = conditions.map(cond => ({
@@ -1328,10 +1596,8 @@ export function verifyRouteAccess(config, user) {
     // Determine redirect
     let redirectTo = null;
     if (!allowed) {
-        const needsAuth = failed.some(f => f.rule === "authenticated");
-        redirectTo = (!user || needsAuth) 
-            ? "/login" 
-            : "/error?message=insufficient_permissions";
+        // Use config's redirectOnDeny if available, otherwise redirect to login
+        redirectTo = config.redirectOnDeny || "/login";
     }
 
     return {
@@ -1353,26 +1619,49 @@ export function verifyRouteAccess(config, user) {
 
 **Examples:**
 ```javascript
+// No config (let React Router handle)
+verifyRouteAccess(null, user)
+→ {allowed: true, redirectTo: null, failed: []}
+
 // Public route
 verifyRouteAccess(
-  {conditions: [{rule: "public"}]}, 
+  {when: {conditions: [{rule: "public"}]}}, 
   null
 )
 → {allowed: true, redirectTo: null, failed: []}
 
 // Not logged in
 verifyRouteAccess(
-  {conditions: [{rule: "authenticated"}]}, 
+  {
+    when: {conditions: [{label: "Must be logged in", rule: "authenticated"}]},
+    redirectOnDeny: "/login"
+  }, 
   null
 )
 → {allowed: false, redirectTo: "/login", failed: ["Must be logged in"]}
 
-// Missing admin role
+// Custom function
 verifyRouteAccess(
-  {conditions: [{rule: "authenticated"}, {rule: "role:admin"}], operator: "AND"}, 
-  {id: 123, roles: ["user"]}
+  {function: "isCEO", redirectOnDeny: "/error?message=admin_required"},
+  {id: 123, accounts: [{profile: {name: "User"}}]}
 )
-→ {allowed: false, redirectTo: "/error?message=insufficient_permissions", failed: ["Must be admin"]}
+→ {allowed: false, redirectTo: "/error?message=admin_required", failed: ["Custom function \"isCEO\" failed"]}
+
+// JavaScript expression - missing admin email
+verifyRouteAccess(
+  {
+    when: {
+      conditions: [
+        {label: "Must be logged in", rule: "authenticated"},
+        {label: "Must be admin", rule: "emailAddress == \"admin@example.com\""}
+      ],
+      operator: "AND"
+    },
+    redirectOnDeny: "/error?message=admin_access_required"
+  }, 
+  {id: 123, emailAddress: "user@example.com"}
+)
+→ {allowed: false, redirectTo: "/error?message=admin_access_required", failed: ["Must be admin"]}
 ```
 
 ---
@@ -1401,28 +1690,269 @@ if (!allowed) {
 
 ---
 
-### Adding Custom Rules (Quick Reference)
+### Quick Reference: Access Control Approaches
 
-**3 Steps:**
-1. Pick your rule syntax (e.g., `team:engineering`)
-2. Add logic to `evaluateRule()` in `route.utils.js`
-3. Use in `routes.json`
+**Approach 1: JavaScript Expressions (Inline)**
 
-**Example:**
-```javascript
-// In evaluateRule()
-if (rule.startsWith("team:")) {
-  const teamName = rule.split(":")[1];
-  return user.teams?.includes(teamName);
+Write expressions directly in `routes.json`:
+```json
+{
+  "/beta": {
+    "allow": {
+      "when": {
+        "conditions": [
+          {"label": "Beta or admin", "rule": "betaTester || roles && roles.includes('admin')"}
+        ]
+      }
+    }
+  }
 }
 ```
 
-Then in routes.json:
-```json
-{"rule": "team:engineering"}
+**Pros:** Simple, declarative, no code changes needed
+**Cons:** Can get complex for advanced logic
+
+**Approach 2: Custom Functions (Reusable)**
+
+Register function in `route.utils.js`:
+```javascript
+const customFunctions = {
+  hasTeamAccess: (user) => {
+    return user.teams?.includes('engineering') && user.credits >= 100;
+  }
+};
 ```
 
-**More pattern ideas:** See custom pattern examples in routes.json section above.
+Use in `routes.json`:
+```json
+{
+  "/team-dashboard": {
+    "allow": {
+      "function": "hasTeamAccess",
+      "redirectOnDeny": "/upgrade"
+    }
+  }
+}
+```
+
+**Pros:** Reusable, testable, cleaner for complex logic
+**Cons:** Requires code changes in route.utils.js
+
+---
+
+## 8.7. Advanced Access Control Features
+
+### Custom Redirect Paths (`redirectOnDeny`)
+
+**Purpose:** Control where users are redirected when access is denied
+
+**Default behavior:** If not specified, users are redirected to `/login`
+
+**Usage:**
+```json
+{
+  "/admin": {
+    "allow": {
+      "when": {
+        "conditions": [{"rule": "authenticated"}]
+      },
+      "redirectOnDeny": "/error?message=admin_access_required"
+    }
+  },
+  "/premium": {
+    "allow": {
+      "when": {
+        "conditions": [{"rule": "plan == 'premium'"}]
+      },
+      "redirectOnDeny": "/upgrade"
+    }
+  }
+}
+```
+
+**Benefits:**
+- Better UX - users see relevant error messages
+- Custom upgrade flows for premium features
+- Different redirects for different denial reasons
+
+---
+
+### JavaScript Expression Safety
+
+**How expressions are evaluated:**
+
+1. User properties extracted: `Object.keys(user)` and `Object.values(user)`
+2. Dynamic function created: `new Function(...keys, wrappedRule)`
+3. Function executed with user values
+4. Result coerced to boolean
+
+**Security considerations:**
+
+✅ **Safe:** Expressions come from `routes.json` in your codebase
+✅ **Safe:** Not evaluated from end-user input
+❌ **Unsafe:** Never evaluate expressions from untrusted sources
+
+**Error handling:**
+- Syntax errors → logged and return `false` (deny access)
+- Undefined properties → logged and return `false`
+- Runtime errors → logged and return `false`
+
+**Best practices:**
+- Use safe navigation: `userMetadata && userMetadata.betaTester`
+- Avoid complex logic - use custom functions instead
+- Test expressions with various user objects
+
+---
+
+### Custom Functions Registry Pattern
+
+**Structure:**
+```javascript
+// At top of route.utils.js
+const customFunctions = {
+  functionName: (user) => {
+    // Your logic here
+    return boolean;
+  }
+};
+```
+
+**Example - Complex authorization:**
+```javascript
+const customFunctions = {
+  canAccessBeta: (user) => {
+    // Complex logic with multiple checks
+    if (!user) return false;
+    
+    const isBetaTester = user.userMetadata?.betaTester;
+    const hasEnoughCredits = user.credits >= 50;
+    const isNotBanned = !user.banned;
+    
+    return isBetaTester && hasEnoughCredits && isNotBanned;
+  },
+  
+  isTeamLead: (user) => {
+    if (!user?.teams) return false;
+    return user.teams.some(team => team.role === 'lead');
+  },
+  
+  hasFeatureAccess: (user) => {
+    // Can even call external services (with caching)
+    try {
+      const features = user.subscription?.features || [];
+      return features.includes('advanced_analytics');
+    } catch (error) {
+      console.error('Feature check failed:', error);
+      return false;
+    }
+  }
+};
+```
+
+**Usage in routes.json:**
+```json
+{
+  "/beta": {
+    "allow": {
+      "function": "canAccessBeta",
+      "redirectOnDeny": "/beta-signup"
+    }
+  },
+  "/team-settings": {
+    "allow": {
+      "function": "isTeamLead",
+      "redirectOnDeny": "/error?message=team_lead_only"
+    }
+  }
+}
+```
+
+**When to use custom functions:**
+- Logic spans multiple conditions with complex boolean operations
+- Need try-catch error handling
+- Want to call external services or perform async checks (with caching)
+- Same logic used across multiple routes
+- Logic too complex to read as inline expression
+
+---
+
+### Mixing Approaches
+
+You can use both `when` conditions and custom functions in the same `routes.json`:
+
+```json
+{
+  "/public": {
+    "allow": {
+      "when": {"conditions": [{"rule": "public"}]}
+    }
+  },
+  "/dashboard": {
+    "allow": {
+      "when": {"conditions": [{"rule": "authenticated"}]},
+      "redirectOnDeny": "/login"
+    }
+  },
+  "/admin": {
+    "allow": {
+      "function": "isAdmin",
+      "redirectOnDeny": "/error?message=admin_only"
+    }
+  },
+  "/beta": {
+    "allow": {
+      "when": {
+        "conditions": [
+          {"rule": "authenticated"},
+          {"rule": "betaTester || roles && roles.includes('admin')"}
+        ],
+        "operator": "AND"
+      },
+      "redirectOnDeny": "/beta-signup"
+    }
+  }
+}
+```
+
+**Decision guide:**
+- **Simple single check** → Inline expression (`authenticated`, `public`)
+- **Property comparison** → Inline expression (`emailAddress == "admin@example.com"`)
+- **Boolean logic** → Inline expression (`betaTester || roles.includes('admin')`)
+- **Complex multi-step logic** → Custom function
+- **Reusable across routes** → Custom function
+
+---
+
+### Backward Compatibility
+
+The new structure maintains backward compatibility:
+
+```javascript
+// Old structure (still works)
+const whenClause = config.when || config;
+```
+
+This means you can have both old and new formats in the same file during migration:
+
+```json
+{
+  "/old-route": {
+    "allow": {
+      "conditions": [{"rule": "authenticated"}]
+    }
+  },
+  "/new-route": {
+    "allow": {
+      "when": {
+        "conditions": [{"rule": "authenticated"}]
+      },
+      "redirectOnDeny": "/login"
+    }
+  }
+}
+```
+
+However, **best practice** is to use the new `when` structure consistently.
 
 ---
 
@@ -2429,11 +2959,14 @@ Fetches access control rules for the current route from `routes.json`.
 // 3. Returns:
 {
   "allow": {
-    "conditions": [
-      {"label": "User must be logged in", "rule": "authenticated"},
-      {"label": "Role must be Admin", "rule": "role:admin"}
-    ],
-    "operator": "AND"
+    "when": {
+      "conditions": [
+        {"label": "User must be logged in", "rule": "authenticated"},
+        {"label": "Role must be Admin", "rule": "emailAddress == \"admin@example.com\""}
+      ],
+      "operator": "AND"
+    },
+    "redirectOnDeny": "/error?message=admin_access_required"
   }
 }
 ```
@@ -2447,12 +2980,21 @@ Evaluates whether the current user meets the access requirements.
 **What it does:**
 ```javascript
 // Given:
-// config.allow = { conditions: [{ rule: "authenticated" }, { rule: "role:admin" }], operator: "AND" }
-// user = { id: 123, roles: ["admin"] }
+// config.allow = {
+//   when: {
+//     conditions: [
+//       { rule: "authenticated" },
+//       { rule: "emailAddress == \"admin@example.com\"" }
+//     ],
+//     operator: "AND"
+//   },
+//   redirectOnDeny: "/error?message=admin_access_required"
+// }
+// user = { id: 123, emailAddress: "admin@example.com" }
 
 // Process:
 // 1. Evaluate "authenticated": user !== null → true ✓
-// 2. Evaluate "role:admin": user.roles.includes("admin") → true ✓
+// 2. Evaluate "emailAddress == \"admin@example.com\"": true ✓
 // 3. Operator "AND": both true → allowed = true
 
 // Returns:
@@ -2696,7 +3238,7 @@ location.pathname = "/dashboard"
 
 ```javascript
 // User state
-user = { id: 123, roles: ["user"] }  // No admin role
+user = { id: 123, emailAddress: "user@example.com" }  // Not admin email
 
 // Navigation
 location.pathname = "/admin/users"
@@ -2707,22 +3249,25 @@ location.pathname = "/admin/users"
   Pattern matches "/admin/*"
   Returns: {
     allow: {
-      conditions: [
-        { rule: "authenticated" },
-        { rule: "role:admin" }
-      ],
-      operator: "AND"
+      when: {
+        conditions: [
+          { rule: "authenticated" },
+          { rule: "emailAddress == \"admin@example.com\"" }
+        ],
+        operator: "AND"
+      },
+      redirectOnDeny: "/error?message=admin_access_required"
     }
   }
 → verifyRouteAccess(config, user)
   Evaluates:
     - rule "authenticated" → !!user → true ✓
-    - rule "role:admin" → user.roles.includes("admin") → false ✗
+    - rule "emailAddress == \"admin@example.com\"" → false ✗
   Operator "AND": not all passed → false
-  Returns: { allowed: false, redirectTo: "/error?message=insufficient_permissions" }
+  Returns: { allowed: false, redirectTo: "/error?message=admin_access_required" }
 → if (!allowed && redirectTo) → true ✓
 → redirectPath = "/admin/users"
-→ navigate("/error?message=insufficient_permissions&redirect=%2Fadmin%2Fusers", { replace: true })
+→ navigate("/error?message=admin_access_required&redirect=%2Fadmin%2Fusers", { replace: true })
 
 // Result: Redirected to error page
 ```
@@ -2731,7 +3276,7 @@ location.pathname = "/admin/users"
 
 ```javascript
 // User state
-user = { id: 123, roles: ["user", "admin"] }  // Has admin role
+user = { id: 123, emailAddress: "admin@example.com" }  // Is admin
 
 // Navigation
 location.pathname = "/admin/users"
@@ -2741,17 +3286,20 @@ location.pathname = "/admin/users"
 → getRouteConfig("/admin/users")
   Returns: {
     allow: {
-      conditions: [
-        { rule: "authenticated" },
-        { rule: "role:admin" }
-      ],
-      operator: "AND"
+      when: {
+        conditions: [
+          { rule: "authenticated" },
+          { rule: "emailAddress == \"admin@example.com\"" }
+        ],
+        operator: "AND"
+      },
+      redirectOnDeny: "/error?message=admin_access_required"
     }
   }
 → verifyRouteAccess(config, user)
   Evaluates:
     - rule "authenticated" → true ✓
-    - rule "role:admin" → true ✓
+    - rule "emailAddress == \"admin@example.com\"" → true ✓
   Operator "AND": all passed → true
   Returns: { allowed: true, redirectTo: null }
 → if (!allowed && redirectTo) → false
