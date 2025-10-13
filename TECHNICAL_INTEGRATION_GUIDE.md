@@ -761,7 +761,7 @@ This project uses **three interconnected files** to implement authentication-awa
 
 ---
 
-## 8.5. routes.json - Access Control Configuration
+## 8.1. routes.json - Access Control Configuration
 
 ### Overview
 
@@ -927,9 +927,9 @@ The system automatically makes all user properties available by name. You can di
 | ✅ Write This | ❌ Not This |
 |--------------|------------|
 | `emailAddress == "admin@example.com"` | `user.emailAddress == "admin@example.com"` |
-| `userMetadata.isExternal` | `user.userMetadata.isExternal` |
-| `roles && roles.includes('admin')` | `user.roles && user.roles.includes('admin')` |
-| `accounts[0].profile.name == 'CEO'` | `user.accounts[0].profile.name == 'CEO'` |
+| `userMetadata?.isExternal` | `user.userMetadata.isExternal` |
+| `roles?.includes('admin')` | `user.roles && user.roles.includes('admin')` |
+| `accounts?.[0]?.profile?.name == 'CEO'` | `user.accounts[0].profile.name == 'CEO'` |
 
 **Think of it like this:**
 ```javascript
@@ -972,7 +972,7 @@ user.emailAddress ❌  // 'user' doesn't exist in rules!
       "when": {
         "conditions": [
           {"label": "User must be logged in", "rule": "authenticated"},
-          {"label": "Must be CEO", "rule": "accounts[0].profile.name == 'CEO'"}
+          {"label": "Must be CEO", "rule": "accounts?.[0]?.profile?.name == 'CEO'"}
         ],
         "operator": "AND"
       },
@@ -990,7 +990,7 @@ user.emailAddress ❌  // 'user' doesn't exist in rules!
     "allow": {
       "when": {
         "conditions": [
-          {"label": "Must be external user", "rule": "userMetadata.isExternal"}
+          {"label": "Must be external user", "rule": "userMetadata?.isExternal"}
         ]
       },
       "redirectOnDeny": "/error?message=internal_users_only"
@@ -1025,7 +1025,7 @@ user.emailAddress ❌  // 'user' doesn't exist in rules!
     "allow": {
       "when": {
         "conditions": [
-          {"label": "Has moderator role", "rule": "roles && roles.includes('moderator')"}
+          {"label": "Has moderator role", "rule": "roles?.includes('moderator')"}
         ]
       }
     }
@@ -1080,16 +1080,45 @@ For complex or reusable authorization logic, use custom functions instead of inl
 ```javascript
 const customFunctions = {
     isCEO: (user) => {
-        return user && user.accounts[0].profile.name === 'CEO';
+        return user?.accounts?.[0]?.profile?.name === 'CEO';
     },
     hasMinimumCredits: (user) => {
         return user && user.credits >= 100;
     },
     isTeamMember: (user) => {
-        return user && user.teams?.includes('engineering');
+        return user?.teams?.includes('engineering');
     }
 };
 ```
+
+**⚠️ Important: Function Registration**
+
+When you use `"function": "isCEO"` in routes.json:
+- The function name `"isCEO"` **MUST** exist as a key in the `customFunctions` object
+- The name must match **exactly** (case-sensitive)
+- **ALL custom functions MUST be registered** in `customFunctions` in `route.utils.js`
+
+**Example:**
+```javascript
+// In route.utils.js - MUST register here
+const customFunctions = {
+  isCEO: (user) => { ... },           // ← Register function
+  yourNewFunction: (user) => { ... }  // ← Add new functions here
+};
+```
+
+```json
+// In routes.json - Use the exact name
+{
+  "function": "isCEO"  // ← Must match key name in customFunctions
+}
+```
+
+**If function is not found:**
+- Logs error: `Custom function "yourFunction" not found`
+- Access is **denied** (returns false)
+
+---
 
 **Use in** `**routes.json**`**:**
 
@@ -1349,7 +1378,7 @@ Matches:
 
 ---
 
-## 8.6. route.utils.js - Access Verification Engine
+## 8.2. route.utils.js - Access Verification Engine
 
 ### Overview
 
@@ -1560,8 +1589,8 @@ evaluateRule("public", null)                                      → true
 evaluateRule("authenticated", null)                               → false
 evaluateRule("authenticated", {id: 123})                          → true
 evaluateRule("emailAddress == \"admin@example.com\"", user)       → true/false
-evaluateRule("roles && roles.includes('admin')", user)            → true/false
-evaluateRule("accounts[0].profile.name == 'CEO'", user)           → true/false
+evaluateRule("roles?.includes('admin')", user)                    → true/false
+evaluateRule("accounts?.[0]?.profile?.name == 'CEO'", user)       → true/false
 ```
 
 
@@ -1656,7 +1685,7 @@ return true
 // Custom functions registry at top of file
 const customFunctions = {
     isCEO: (user) => {
-        return user && user.accounts[0].profile.name === 'CEO';
+        return user?.accounts?.[0]?.profile?.name === 'CEO';
     }
 };
 
@@ -1701,7 +1730,7 @@ function executeCustomFunction(functionName, user) {
 // Execution
 executeCustomFunction("isCEO", user)
 // → Calls customFunctions.isCEO(user)
-// → Returns true if user.accounts[0].profile.name === 'CEO'
+// → Returns true if user?.accounts?.[0]?.profile?.name === 'CEO'
 ```
 
 **When to use custom functions:**
@@ -1898,7 +1927,7 @@ Register function in `route.utils.js`:
 ```javascript
 const customFunctions = {
   isCEO: (user) => {
-    return user && user.accounts[0].profile.name === 'CEO';
+    return user?.accounts?.[0]?.profile?.name === 'CEO';
   }
 };
 ```
@@ -1922,7 +1951,7 @@ Use in `routes.json`:
 
 ---
 
-## 8.7. Advanced Access Control Features
+## 8.3. Advanced Access Control Features
 
 ### Custom Redirect Paths (`redirectOnDeny`)
 
@@ -2073,9 +2102,10 @@ navigate(redirectUrl, { replace: true });
 
 **Best practices:**
 
-* Use safe navigation: `userMetadata && userMetadata.department`
+* **Use optional chaining (`?.`) for nested properties**: `userMetadata?.department` or `accounts?.[0]?.profile?.name`
+* **Use optional chaining for arrays**: `roles?.includes('admin')` instead of `roles && roles.includes('admin')`
 * Avoid complex logic - use custom functions instead
-* Test expressions with various user objects
+* Test expressions with various user objects (including null/undefined values)
 
 
 ---
@@ -2100,7 +2130,7 @@ const customFunctions = {
 const customFunctions = {
   isCEO: (user) => {
     // Simple check for CEO role
-    return user && user.accounts[0].profile.name === 'CEO';
+    return user?.accounts?.[0]?.profile?.name === 'CEO';
   },
   
   isAdminOrManager: (user) => {
