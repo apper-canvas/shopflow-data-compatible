@@ -146,6 +146,7 @@ export function verifyRouteAccess(config, user) {
         return {
             allowed: true,
             redirectTo: null,
+            excludeRedirectQuery: false,
             failed: []
         };
     }
@@ -157,13 +158,14 @@ export function verifyRouteAccess(config, user) {
         return {
             allowed,
             redirectTo: allowed ? null : (config.redirectOnDeny || "/login"),
+            excludeRedirectQuery: config.excludeRedirectQuery === true,
             failed: allowed ? [] : [`Custom function "${config.function}" failed`]
         };
     }
 
     // Otherwise, use the when conditions as before
     const whenClause = config.when || config;
-    const { conditions = [], operator = "AND" } = whenClause;
+    const { conditions = [], operator = "OR" } = whenClause;
 
     // Evaluate all conditions
     const results = conditions.map(cond => ({
@@ -189,6 +191,7 @@ export function verifyRouteAccess(config, user) {
     return {
         allowed,
         redirectTo,
+        excludeRedirectQuery: config.excludeRedirectQuery === true,
         failed: failed.map(f => f.label)
     };
 }
