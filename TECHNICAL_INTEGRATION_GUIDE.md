@@ -795,9 +795,10 @@ There are two approaches to define access control:
 - **`conditions`** - Array of rules to check
 - **`label`** - Description for errors/debugging
 - **`rule`** - The actual access rule (JavaScript expression or built-in)
-- **`operator`** - `"AND"` (default) or `"OR"`
+- **`operator`** - `"OR"` (default) or `"AND"`
 - **`function`** - Name of registered custom function (alternative to `when`)
 - **`redirectOnDeny`** - Custom redirect path when access is denied (optional, defaults to `/login`)
+- **`excludeRedirectQuery`** - Boolean, when `true`, prevents adding `?redirect=` query parameter on denial (optional, defaults to `false`)
 
 ---
 
@@ -900,13 +901,15 @@ There are two approaches to define access control:
 **Complex boolean logic:**
 ```json
 {
-  "/beta": {
+  "/admin/dashboard": {
     "allow": {
       "when": {
         "conditions": [
-          {"label": "Beta access", "rule": "betaTester || roles && roles.includes('admin')"}
+          {"label": "Admin access", "rule": "authenticated && emailAddress == \"admin@example.com\""}
         ]
-      }
+      },
+      "redirectOnDeny": "/error?message=admin_access_required",
+      "excludeRedirectQuery": true
     }
   }
 }
@@ -949,7 +952,7 @@ When writing JavaScript expressions, all user object properties are available as
   ],
   userMetadata: {
     isExternal: false,
-    betaTester: true
+    department: "engineering"
   }
 }
 ```
@@ -1016,7 +1019,7 @@ const customFunctions = {
 
 ### Operators
 
-**AND (default)** - All conditions must pass:
+**AND** - All conditions must pass (recommended for admin routes):
 ```json
 {
   "/admin": {
@@ -1027,22 +1030,24 @@ const customFunctions = {
           {"label": "Must be admin", "rule": "emailAddress == \"admin@example.com\""}
         ],
         "operator": "AND"
-      }
+      },
+      "redirectOnDeny": "/error?message=admin_access_required",
+      "excludeRedirectQuery": true
     }
   }
 }
 ```
-Only admin users who are logged in can access.
+Only users who are logged in AND have admin email can access.
 
 **OR** - At least one condition must pass:
 ```json
 {
-  "/beta": {
+  "/dashboard": {
     "allow": {
       "when": {
         "conditions": [
-          {"label": "Is beta tester", "rule": "userMetadata.betaTester"},
-          {"label": "Is admin", "rule": "roles && roles.includes('admin')"}
+          {"label": "Must be logged in", "rule": "authenticated"},
+          {"label": "Or be admin", "rule": "emailAddress == \"admin@example.com\""}
         ],
         "operator": "OR"
       }
@@ -1050,7 +1055,9 @@ Only admin users who are logged in can access.
   }
 }
 ```
-Beta testers OR admins can access.
+Either logged in users OR admins can access.
+
+**Note:** Default operator is `"OR"` when not specified, but it's recommended to explicitly set `"operator": "AND"` for admin routes to ensure all conditions must pass.
 
 ---
 
@@ -1577,7 +1584,7 @@ export function verifyRouteAccess(config, user) {
 
     // Otherwise, use the when conditions as before
     const whenClause = config.when || config;
-    const { conditions = [], operator = "AND" } = whenClause;
+    const { conditions = [], operator = "OR" } = whenClause;
 
     // Evaluate all conditions
     const results = conditions.map(cond => ({
@@ -1603,6 +1610,7 @@ export function verifyRouteAccess(config, user) {
     return {
         allowed,
         redirectTo,
+        excludeRedirectQuery: config.excludeRedirectQuery === true,
         failed: failed.map(f => f.label)
     };
 }
@@ -1611,9 +1619,10 @@ export function verifyRouteAccess(config, user) {
 **Return Structure:**
 ```javascript
 {
-  allowed: boolean,        // Can user access?
-  redirectTo: string|null, // Where to redirect if denied
-  failed: string[]         // Labels of failed conditions
+  allowed: boolean,               // Can user access?
+  redirectTo: string|null,        // Where to redirect if denied
+  excludeRedirectQuery: boolean,  // If true, don't add ?redirect= query param
+  failed: string[]                // Labels of failed conditions
 }
 ```
 
@@ -1621,14 +1630,14 @@ export function verifyRouteAccess(config, user) {
 ```javascript
 // No config (let React Router handle)
 verifyRouteAccess(null, user)
-→ {allowed: true, redirectTo: null, failed: []}
+→ {allowed: true, redirectTo: null, excludeRedirectQuery: false, failed: []}
 
 // Public route
 verifyRouteAccess(
   {when: {conditions: [{rule: "public"}]}}, 
   null
 )
-→ {allowed: true, redirectTo: null, failed: []}
+→ {allowed: true, redirectTo: null, excludeRedirectQuery: false, failed: []}
 
 // Not logged in
 verifyRouteAccess(
@@ -1638,14 +1647,14 @@ verifyRouteAccess(
   }, 
   null
 )
-→ {allowed: false, redirectTo: "/login", failed: ["Must be logged in"]}
+→ {allowed: false, redirectTo: "/login", excludeRedirectQuery: false, failed: ["Must be logged in"]}
 
-// Custom function
+// Custom function with excludeRedirectQuery
 verifyRouteAccess(
-  {function: "isCEO", redirectOnDeny: "/error?message=admin_required"},
+  {function: "isCEO", redirectOnDeny: "/error?message=admin_required", excludeRedirectQuery: true},
   {id: 123, accounts: [{profile: {name: "User"}}]}
 )
-→ {allowed: false, redirectTo: "/error?message=admin_required", failed: ["Custom function \"isCEO\" failed"]}
+→ {allowed: false, redirectTo: "/error?message=admin_required", excludeRedirectQuery: true, failed: ["Custom function \"isCEO\" failed"]}
 
 // JavaScript expression - missing admin email
 verifyRouteAccess(
@@ -1657,11 +1666,12 @@ verifyRouteAccess(
       ],
       operator: "AND"
     },
-    redirectOnDeny: "/error?message=admin_access_required"
+    redirectOnDeny: "/error?message=admin_access_required",
+    excludeRedirectQuery: true
   }, 
   {id: 123, emailAddress: "user@example.com"}
 )
-→ {allowed: false, redirectTo: "/error?message=admin_access_required", failed: ["Must be admin"]}
+→ {allowed: false, redirectTo: "/error?message=admin_access_required", excludeRedirectQuery: true, failed: ["Must be admin"]}
 ```
 
 ---
@@ -1697,13 +1707,17 @@ if (!allowed) {
 Write expressions directly in `routes.json`:
 ```json
 {
-  "/beta": {
+  "/admin": {
     "allow": {
       "when": {
         "conditions": [
-          {"label": "Beta or admin", "rule": "betaTester || roles && roles.includes('admin')"}
-        ]
-      }
+          {"label": "Must be logged in", "rule": "authenticated"},
+          {"label": "Must be admin", "rule": "emailAddress == \"admin@example.com\""}
+        ],
+        "operator": "AND"
+      },
+      "redirectOnDeny": "/error?message=admin_access_required",
+      "excludeRedirectQuery": true
     }
   }
 }
@@ -1717,8 +1731,8 @@ Write expressions directly in `routes.json`:
 Register function in `route.utils.js`:
 ```javascript
 const customFunctions = {
-  hasTeamAccess: (user) => {
-    return user.teams?.includes('engineering') && user.credits >= 100;
+  isCEO: (user) => {
+    return user && user.accounts[0].profile.name === 'CEO';
   }
 };
 ```
@@ -1726,10 +1740,11 @@ const customFunctions = {
 Use in `routes.json`:
 ```json
 {
-  "/team-dashboard": {
+  "/admin/*": {
     "allow": {
-      "function": "hasTeamAccess",
-      "redirectOnDeny": "/upgrade"
+      "function": "isCEO",
+      "redirectOnDeny": "/error?message=admin_access_required",
+      "excludeRedirectQuery": true
     }
   }
 }
@@ -1777,6 +1792,89 @@ Use in `routes.json`:
 
 ---
 
+### Excluding Redirect Query Parameter (`excludeRedirectQuery`)
+
+**Purpose:** Control whether the original destination URL is preserved when redirecting users who are denied access
+
+**Default behavior:** `false` - The redirect query parameter IS added (e.g., `/login?redirect=%2Fdashboard`)
+
+**When to use `excludeRedirectQuery: true`:**
+- **Error pages** - Users shouldn't return to the page they couldn't access
+- **Admin-only areas** - Non-admins shouldn't be redirected back after attempting access
+- **Prevent redirect loops** - When the redirect destination might fail the same access check
+
+**Usage in routes.json:**
+```json
+{
+  "/admin": {
+    "allow": {
+      "when": {
+        "conditions": [
+          {"label": "Must be logged in", "rule": "authenticated"},
+          {"label": "Must be admin", "rule": "emailAddress == \"admin@example.com\""}
+        ],
+        "operator": "AND"
+      },
+      "redirectOnDeny": "/error?message=admin_access_required",
+      "excludeRedirectQuery": true
+    }
+  },
+  "/external": {
+    "allow": {
+      "when": {
+        "conditions": [
+          {"label": "Must be external user", "rule": "userMetadata.isExternal"}
+        ]
+      },
+      "redirectOnDeny": "/error?message=internal_users_only",
+      "excludeRedirectQuery": true
+    }
+  }
+}
+```
+
+**How it works:**
+
+**Without `excludeRedirectQuery` (default behavior):**
+```
+User tries to access: /dashboard
+Access denied → Redirected to: /login?redirect=%2Fdashboard
+After login → Redirected back to: /dashboard ✓
+```
+
+**With `excludeRedirectQuery: true`:**
+```
+User tries to access: /admin
+Access denied → Redirected to: /error?message=admin_access_required
+(No redirect query param added)
+User stays on error page (no automatic return to /admin)
+```
+
+**Implementation in Root.jsx:**
+
+The `excludeRedirectQuery` flag is used when building the redirect URL:
+
+```javascript
+const { allowed, redirectTo, excludeRedirectQuery } = verifyRouteAccess(config.allow, user);
+
+// Build redirect URL - add redirect query param unless excluded
+let redirectUrl = redirectTo;
+if (!excludeRedirectQuery) {
+  const redirectPath = location.pathname + location.search;
+  const separator = redirectTo.includes('?') ? '&' : '?';
+  redirectUrl = `${redirectTo}${separator}redirect=${encodeURIComponent(redirectPath)}`;
+}
+
+navigate(redirectUrl, { replace: true });
+```
+
+**Key points:**
+- Separator logic handles both `?` and `&` for URLs with existing query params
+- When excluded, only the `redirectOnDeny` path is used (clean redirect)
+- Prevents infinite redirect loops for pages that can never be accessed
+
+---
+
 ### JavaScript Expression Safety
 
 **How expressions are evaluated:**
@@ -1798,7 +1896,7 @@ Use in `routes.json`:
 - Runtime errors → logged and return `false`
 
 **Best practices:**
-- Use safe navigation: `userMetadata && userMetadata.betaTester`
+- Use safe navigation: `userMetadata && userMetadata.department`
 - Avoid complex logic - use custom functions instead
 - Test expressions with various user objects
 
@@ -1820,29 +1918,27 @@ const customFunctions = {
 **Example - Complex authorization:**
 ```javascript
 const customFunctions = {
-  canAccessBeta: (user) => {
-    // Complex logic with multiple checks
+  isCEO: (user) => {
+    // Simple check for CEO role
+    return user && user.accounts[0].profile.name === 'CEO';
+  },
+  
+  isAdminOrManager: (user) => {
+    // Multiple role check
     if (!user) return false;
-    
-    const isBetaTester = user.userMetadata?.betaTester;
-    const hasEnoughCredits = user.credits >= 50;
-    const isNotBanned = !user.banned;
-    
-    return isBetaTester && hasEnoughCredits && isNotBanned;
+    const allowedRoles = ['admin', 'manager'];
+    return user.roles?.some(role => allowedRoles.includes(role));
   },
   
-  isTeamLead: (user) => {
-    if (!user?.teams) return false;
-    return user.teams.some(team => team.role === 'lead');
-  },
-  
-  hasFeatureAccess: (user) => {
-    // Can even call external services (with caching)
+  hasAdminPermissions: (user) => {
+    // Complex permission check with error handling
     try {
-      const features = user.subscription?.features || [];
-      return features.includes('advanced_analytics');
+      if (!user) return false;
+      const isAdmin = user.emailAddress === 'admin@example.com';
+      const hasPermission = user.permissions?.includes('admin_access');
+      return isAdmin || hasPermission;
     } catch (error) {
-      console.error('Feature check failed:', error);
+      console.error('Permission check failed:', error);
       return false;
     }
   }
@@ -1852,16 +1948,18 @@ const customFunctions = {
 **Usage in routes.json:**
 ```json
 {
-  "/beta": {
+  "/admin/*": {
     "allow": {
-      "function": "canAccessBeta",
-      "redirectOnDeny": "/beta-signup"
+      "function": "isCEO",
+      "redirectOnDeny": "/error?message=admin_access_required",
+      "excludeRedirectQuery": true
     }
   },
-  "/team-settings": {
+  "/admin/settings": {
     "allow": {
-      "function": "isTeamLead",
-      "redirectOnDeny": "/error?message=team_lead_only"
+      "function": "isAdminOrManager",
+      "redirectOnDeny": "/error?message=insufficient_permissions",
+      "excludeRedirectQuery": true
     }
   }
 }
@@ -1895,20 +1993,22 @@ You can use both `when` conditions and custom functions in the same `routes.json
   },
   "/admin": {
     "allow": {
-      "function": "isAdmin",
-      "redirectOnDeny": "/error?message=admin_only"
-    }
-  },
-  "/beta": {
-    "allow": {
       "when": {
         "conditions": [
           {"rule": "authenticated"},
-          {"rule": "betaTester || roles && roles.includes('admin')"}
+          {"rule": "emailAddress == \"admin@example.com\""}
         ],
         "operator": "AND"
       },
-      "redirectOnDeny": "/beta-signup"
+      "redirectOnDeny": "/error?message=admin_access_required",
+      "excludeRedirectQuery": true
+    }
+  },
+  "/admin/*": {
+    "allow": {
+      "function": "isCEO",
+      "redirectOnDeny": "/error?message=admin_access_required",
+      "excludeRedirectQuery": true
     }
   }
 }
@@ -1917,8 +2017,8 @@ You can use both `when` conditions and custom functions in the same `routes.json
 **Decision guide:**
 - **Simple single check** → Inline expression (`authenticated`, `public`)
 - **Property comparison** → Inline expression (`emailAddress == "admin@example.com"`)
-- **Boolean logic** → Inline expression (`betaTester || roles.includes('admin')`)
-- **Complex multi-step logic** → Custom function
+- **Multiple conditions** → Inline with AND operator for admin routes
+- **Complex multi-step logic** → Custom function (like `isCEO`)
 - **Reusable across routes** → Custom function
 
 ---
@@ -2496,27 +2596,33 @@ export default function Root() {
   /**
    * EFFECT 2: Route access control
    * Runs on EVERY navigation
-   * CRITICAL: Waits for isInitialized before checking access
+   * CRITICAL: Uses early return guards for better readability
    */
   useEffect(() => {
-    // THE GATE: Don't check routes until auth completes
-    if (isInitialized) {
-      // Get access rules for current path
-      const config = getRouteConfig(location.pathname);
-      
-      // Verify user has access
-      const { allowed, redirectTo } = verifyRouteAccess(config.allow, user);
+    // Guard 1: Don't check routes until auth completes
+    if (!isInitialized) return;
 
-      // Redirect if not allowed
-      if (!allowed && redirectTo) {
-        // Preserve intended destination
-        const redirectPath = location.pathname + location.search;
-        navigate(
-          `${redirectTo}?redirect=${encodeURIComponent(redirectPath)}`,
-          { replace: true }
-        );
-      }
+    // Get access rules for current path
+    const config = getRouteConfig(location.pathname);
+
+    // Guard 2: Exit if no config or no allow rules
+    if (!config?.allow) return;
+
+    // Verify user has access
+    const { allowed, redirectTo, excludeRedirectQuery } = verifyRouteAccess(config.allow, user);
+
+    // Guard 3: Exit if access is allowed or no redirect
+    if (allowed || !redirectTo) return;
+
+    // Build redirect URL - add redirect query param unless excluded
+    let redirectUrl = redirectTo;
+    if (!excludeRedirectQuery) {
+      const redirectPath = location.pathname + location.search;
+      const separator = redirectTo.includes('?') ? '&' : '?';
+      redirectUrl = `${redirectTo}${separator}redirect=${encodeURIComponent(redirectPath)}`;
     }
+
+    navigate(redirectUrl, { replace: true });
   }, [isInitialized, user, location.pathname, location.search, navigate]);
 
   /**
@@ -2913,25 +3019,38 @@ The route guard `useEffect` is the **most critical piece of code** for enforcing
 
 ```javascript
 useEffect(() => {
-  if (isInitialized) {
-    const config = getRouteConfig(location.pathname);
-    const { allowed, redirectTo } = verifyRouteAccess(config.allow, user);
-    
-    if (!allowed && redirectTo) {
-      const redirectPath = location.pathname + location.search;
-      navigate(`${redirectTo}?redirect=${encodeURIComponent(redirectPath)}`, { replace: true });
-    }
+  // Guard 1: Don't check routes until auth completes
+  if (!isInitialized) return;
+
+  // Get access rules for current path
+  const config = getRouteConfig(location.pathname);
+
+  // Guard 2: Exit if no config or no allow rules
+  if (!config?.allow) return;
+
+  // Verify user has access
+  const { allowed, redirectTo, excludeRedirectQuery } = verifyRouteAccess(config.allow, user);
+
+  // Guard 3: Exit if access is allowed or no redirect
+  if (allowed || !redirectTo) return;
+
+  // Build redirect URL - add redirect query param unless excluded
+  let redirectUrl = redirectTo;
+  if (!excludeRedirectQuery) {
+    const redirectPath = location.pathname + location.search;
+    const separator = redirectTo.includes('?') ? '&' : '?';
+    redirectUrl = `${redirectTo}${separator}redirect=${encodeURIComponent(redirectPath)}`;
   }
+
+  navigate(redirectUrl, { replace: true });
 }, [isInitialized, user, location.pathname, location.search, navigate]);
 ```
 
 ### Line-by-Line Breakdown
 
-#### Line 1: `useEffect(() => {`
+#### Lines 1-2: Early Return Guards
 
-Standard React hook that runs side effects. This effect will re-run whenever any dependency in the dependency array changes.
-
-#### Line 2: `if (isInitialized) {`
+**Guard 1: `if (!isInitialized) return;`**
 
 **THE GATE** - This is the critical check that prevents the route guard from running before authentication completes.
 
@@ -2942,10 +3061,17 @@ Standard React hook that runs side effects. This effect will re-run whenever any
 - Creates infinite redirect loop
 
 **State values:**
-- `false` → Skip entire effect (auth still initializing)
-- `true` → Auth complete, safe to check route access
+- `false` → Early return, skip entire effect (auth still initializing)
+- `true` → Auth complete, continue to check route access
 
-#### Line 3: `const config = getRouteConfig(location.pathname);`
+**Why early return?**
+- Cleaner code - no nested if blocks
+- Better readability - guards at the top
+- Follows guard pattern best practice
+
+#### Line 4-5: Get Route Configuration
+
+**`const config = getRouteConfig(location.pathname);`**
 
 Fetches access control rules for the current route from `routes.json`.
 
@@ -2966,14 +3092,33 @@ Fetches access control rules for the current route from `routes.json`.
       ],
       "operator": "AND"
     },
-    "redirectOnDeny": "/error?message=admin_access_required"
+    "redirectOnDeny": "/error?message=admin_access_required",
+    "excludeRedirectQuery": true
   }
 }
 ```
 
 **From:** `src/router/route.utils.js` → `getRouteConfig()` function
 
-#### Line 4: `const { allowed, redirectTo } = verifyRouteAccess(config.allow, user);`
+#### Line 7-8: Guard 2 - Config Validation
+
+**`if (!config?.allow) return;`**
+
+**Purpose:** Exit early if route has no access control configured
+
+**Why this guard?**
+- Some routes might not be in `routes.json` (returns `null`)
+- Allows React Router to handle 404 pages naturally
+- Prevents errors from accessing undefined properties
+
+**Optional chaining (`?.`):**
+- Safely checks if `config` exists AND has `allow` property
+- Returns `undefined` if chain breaks at any point
+- Prevents "Cannot read property of null" errors
+
+#### Line 11: Verify Access with All Return Values
+
+**`const { allowed, redirectTo, excludeRedirectQuery } = verifyRouteAccess(config.allow, user);`**
 
 Evaluates whether the current user meets the access requirements.
 
@@ -2988,7 +3133,8 @@ Evaluates whether the current user meets the access requirements.
 //     ],
 //     operator: "AND"
 //   },
-//   redirectOnDeny: "/error?message=admin_access_required"
+//   redirectOnDeny: "/error?message=admin_access_required",
+//   excludeRedirectQuery: true
 // }
 // user = { id: 123, emailAddress: "admin@example.com" }
 
@@ -3001,6 +3147,7 @@ Evaluates whether the current user meets the access requirements.
 {
   allowed: true,
   redirectTo: null,
+  excludeRedirectQuery: true,
   failed: []
 }
 ```
@@ -3012,79 +3159,129 @@ Evaluates whether the current user meets the access requirements.
 // Returns:
 {
   allowed: false,
-  redirectTo: "/login",  // Determined by failed rule
+  redirectTo: "/error?message=admin_access_required",
+  excludeRedirectQuery: true,
   failed: ["User must be logged in"]
 }
 ```
 
 **From:** `src/router/route.utils.js` → `verifyRouteAccess()` function
 
-#### Line 6: `if (!allowed && redirectTo) {`
+#### Line 14: Guard 3 - Access Check
 
-Checks if access was denied AND a redirect destination was provided.
+**`if (allowed || !redirectTo) return;`**
+
+**Purpose:** Exit early if user has access OR no redirect is needed
 
 **Decision tree:**
-- `allowed = true` → Do nothing, let page render
-- `allowed = false` AND `redirectTo = null` → Do nothing (shouldn't happen)
-- `allowed = false` AND `redirectTo = "/login"` → Execute redirect
+- `allowed = true` → Early return, let page render ✓
+- `allowed = false` AND `redirectTo = null` → Early return (shouldn't happen)
+- `allowed = false` AND `redirectTo = "/login"` → Continue to redirect logic
 
-#### Line 7: `const redirectPath = location.pathname + location.search;`
+**Why combined check?**
+- Single line instead of nested ifs
+- Both conditions result in same action (do nothing)
+- More readable and maintainable
 
-Captures the full current URL including query parameters.
+#### Lines 17-24: Build Redirect URL
 
-**Examples:**
+**`let redirectUrl = redirectTo;`**
+
+Start with the base redirect path from config.
+
+**Conditional Redirect Query Parameter:**
+
 ```javascript
-// Scenario 1: Simple path
+if (!excludeRedirectQuery) {
+  const redirectPath = location.pathname + location.search;
+  const separator = redirectTo.includes('?') ? '&' : '?';
+  redirectUrl = `${redirectTo}${separator}redirect=${encodeURIComponent(redirectPath)}`;
+}
+```
+
+**Logic breakdown:**
+
+1. **Check `excludeRedirectQuery` flag:**
+   - If `true` → Skip adding redirect parameter (clean redirect)
+   - If `false` → Add redirect parameter (preserve destination)
+
+2. **Capture current location:**
+   ```javascript
+   const redirectPath = location.pathname + location.search;
+   ```
+   Examples:
+   - `/dashboard` → `/dashboard`
+   - `/products?category=electronics` → `/products?category=electronics`
+   - `/product/123?variant=blue` → `/product/123?variant=blue`
+
+3. **Smart separator selection:**
+   ```javascript
+   const separator = redirectTo.includes('?') ? '&' : '?';
+   ```
+   - If `redirectTo` already has query params → Use `&`
+   - If `redirectTo` has no query params → Use `?`
+   
+   Examples:
+   - `/login` → Use `?` → `/login?redirect=...`
+   - `/error?message=admin` → Use `&` → `/error?message=admin&redirect=...`
+
+4. **Build final URL:**
+   ```javascript
+   redirectUrl = `${redirectTo}${separator}redirect=${encodeURIComponent(redirectPath)}`;
+   ```
+   - Encodes the redirect path for URL safety
+   - Preserves special characters
+
+**Complete examples:**
+
+**Without excludeRedirectQuery (default):**
+```javascript
+// Scenario 1
+redirectTo = "/login"
 location.pathname = "/dashboard"
-location.search = ""
-redirectPath = "/dashboard"
+→ redirectUrl = "/login?redirect=%2Fdashboard"
 
-// Scenario 2: Path with params
-location.pathname = "/products"
-location.search = "?category=electronics&sort=price"
-redirectPath = "/products?category=electronics&sort=price"
-
-// Scenario 3: Dynamic route
-location.pathname = "/product/123"
-location.search = "?variant=blue"
-redirectPath = "/product/123?variant=blue"
+// Scenario 2  
+redirectTo = "/error?message=admin_required"
+location.pathname = "/admin/users"
+→ redirectUrl = "/error?message=admin_required&redirect=%2Fadmin%2Fusers"
 ```
 
-**Why capture this?**
-- Preserves where user was trying to go
-- After login, can redirect back to intended destination
-- Maintains query parameters and state
-
-#### Line 8: `navigate(`${redirectTo}?redirect=${encodeURIComponent(redirectPath)}`, { replace: true });`
-
-Performs the actual redirect with preserved destination.
-
-**Breaking it down:**
-
-**Part 1: `${redirectTo}?redirect=...`**
+**With excludeRedirectQuery = true:**
 ```javascript
-// redirectTo = "/login"
-// redirectPath = "/dashboard"
+// Scenario 1
+redirectTo = "/error?message=admin_access_required"
+excludeRedirectQuery = true
+→ redirectUrl = "/error?message=admin_access_required" (no redirect param)
 
-// Result: "/login?redirect=%2Fdashboard"
+// Scenario 2
+redirectTo = "/login"
+excludeRedirectQuery = true  
+→ redirectUrl = "/login" (no redirect param)
 ```
 
-**Part 2: `encodeURIComponent(redirectPath)`**
+**Why exclude redirect query?**
+- **Error pages:** User shouldn't return to inaccessible page
+- **Admin areas:** Non-admins shouldn't be redirected back
+- **Prevent loops:** Avoid infinite redirect cycles
+
+#### Line 26: `navigate(redirectUrl, { replace: true });`
+
+Performs the actual redirect using the computed URL (either with or without redirect query parameter).
+
+**`redirectUrl` value examples:**
 ```javascript
-// Why encode?
-// redirectPath might contain special characters: /dashboard?tab=settings&view=grid
-// Encoded: %2Fdashboard%3Ftab%3Dsettings%26view%3Dgrid
+// With redirect parameter (excludeRedirectQuery = false)
+"/login?redirect=%2Fdashboard"
 
-// Without encoding:
-"/login?redirect=/dashboard?tab=settings"
-//                           ^ Breaks URL parsing
+// Without redirect parameter (excludeRedirectQuery = true)
+"/error?message=admin_access_required"
 
-// With encoding:
-"/login?redirect=%2Fdashboard%3Ftab%3Dsettings"
-//                   ^ Safe, properly encoded
+// With separator logic (existing query param)
+"/error?message=admin_required&redirect=%2Fadmin%2Fusers"
 ```
 
-**Part 3: `{ replace: true }`**
+**`{ replace: true }` option:**
 
 **Why `replace: true`?**
 
