@@ -1,5 +1,12 @@
 import routeConfig from "./routes.json";
 
+// Custom authorization functions registry
+const customFunctions = {
+    isCEO: (user) => {
+        return user && user.accounts[0].profile.name === 'CEO';
+    }
+};
+
 // Get route configuration with pattern matching
 export const getRouteConfig = (path) => {
     // Normalize the path
@@ -21,11 +28,8 @@ export const getRouteConfig = (path) => {
         }))
         .sort((a, b) => b.specificity - a.specificity);
 
-    return matches[0]?.config || {
-        allow: {
-            conditions: [{ label: "User must be logged in", rule: "authenticated" }]
-        }
-    };
+    // Return null for unmatched routes to let React Router handle them naturally
+    return matches[0]?.config || null;
 };
 
 // Pattern matching logic
@@ -88,34 +92,78 @@ function evaluateRule(rule, user) {
     if (rule === "public") return true;
     if (rule === "authenticated") return !!user;
 
-    // Field equality pattern: field:value
-    if (rule.includes(":")) {
-        if (!user) return false;
+    return evaluateDynamicRule(rule, user);
+}
 
-        const [field, value] = rule.split(":");
+function evaluateDynamicRule(rule, user) {
+    if (!user) return false;
 
-        // Handle array fields (roles, teams, permissions)
-        if (field === "role" || field === "roles") {
-            const userRoles = user.roles || [];
-            return userRoles.includes(value);
-        }
+    try {
+        // Dynamically extract all keys and values from user object
+        const contextKeys = Object.keys(user);
+        const contextValues = Object.values(user);
 
-        // Handle external user check
-        if (field === "external") {
-            const isExternal = user.userMetadata?.isExternal;
-            const expectedValue = value === "true" || value === true;
-            return isExternal === expectedValue;
-        }
+        // Wrap expression in return statement if not already present
+        const wrappedRule = rule.trim().startsWith('return')
+            ? rule
+            : `return (${rule})`;
 
-        // Direct field comparison
-        return user[field] === value;
+        // Create function with all user properties as parameters
+        const func = new Function(...contextKeys, wrappedRule);
+
+        // Execute function with user values
+        const result = func(...contextValues);
+
+        // Ensure boolean result
+        return Boolean(result);
+
+    } catch (error) {
+        console.error('Error evaluating rule:', rule, error);
+        return false;
+    }
+}
+
+// Helper to execute custom function
+function executeCustomFunction(functionName, user) {
+    const func = customFunctions[functionName];
+
+    if (!func) {
+        console.error(`Custom function "${functionName}" not found`);
+        return false;
     }
 
-    return false;
+    try {
+        return Boolean(func(user));
+    } catch (error) {
+        console.error(`Error executing custom function "${functionName}":`, error);
+        return false;
+    }
 }
 
 export function verifyRouteAccess(config, user) {
-    const { conditions = [], operator = "AND" } = config;
+    // If no config exists, allow access (let React Router handle it)
+    if (!config) {
+        return {
+            allowed: true,
+            redirectTo: null,
+            failed: []
+        };
+    }
+
+    // If custom function is specified, use it instead of when conditions
+    if (config.function) {
+        const allowed = executeCustomFunction(config.function, user);
+
+        return {
+            allowed,
+            redirectTo: allowed ? null : (config.redirectOnDeny || "/login"),
+            failed: allowed ? [] : [`Custom function "${config.function}" failed`]
+        };
+    }
+
+    // Otherwise, use the when conditions as before
+    const whenClause = config.when || config;
+    const { conditions = [], operator = "AND" } = whenClause;
 
     // Evaluate all conditions
     const results = conditions.map(cond => ({
@@ -134,8 +182,8 @@ export function verifyRouteAccess(config, user) {
     // Determine redirect
     let redirectTo = null;
     if (!allowed) {
-        const needsAuth = failed.some(f => f.rule === "authenticated");
-        redirectTo = (!user || needsAuth) ? "/login" : "/error?message=insufficient_permissions";
+        // Use config's redirectOnDeny if available, otherwise redirect to login
+        redirectTo = config.redirectOnDeny || "/login";
     }
 
     return {
