@@ -2,11 +2,14 @@
 
 > Complete technical reference for implementing authentication-aware routing with React Router v6 and Apper SDK
 
+
 ---
 
 ## Table of Contents
 
 **PART 1: React Router v6 Fundamentals**
+
+
 1. [RouterProvider Architecture](#1-routerprovider-architecture)
 2. [Route Objects vs JSX Routes](#2-route-objects-vs-jsx-routes)
 3. [Route Properties](#3-route-properties)
@@ -15,16 +18,26 @@
 6. [Lazy Loading Pattern](#6-lazy-loading-pattern)
 7. [createRoute Helper](#7-createroute-helper)
 
-**PART 2: Apper SDK Integration System**
-8. [Three-File Architecture Overview](#8-three-file-architecture-overview)
-9. [apperClient.js - SDK Singleton](#9-apperclientjs---sdk-singleton)
-10. [userSlice.js - State Management](#10-userslicejs---state-management)
-11. [Root.jsx - The Orchestrator](#11-rootjsx---the-orchestrator)
-12. [Complete Integration Flow](#12-complete-integration-flow)
-13. [The Gate-Keeping Mechanism](#13-the-gate-keeping-mechanism)
-14. [Common Patterns](#14-common-patterns)
-15. [Common Pitfalls](#15-common-pitfalls)
-16. [Technical Q&A](#16-technical-qa)
+**PART 2: Apper SDK Integration System** 
+
+8\. [Three-File Architecture Overview](#8-three-file-architecture-overview) 
+
+9\. [apperClient.js - SDK Singleton](#9-apperclientjs---sdk-singleton) 
+
+10\. [userSlice.js - State Management](#10-userslicejs---state-management) 
+
+11\. [Root.jsx - The Orchestrator](#11-rootjsx---the-orchestrator) 
+
+12\. [Complete Integration Flow](#12-complete-integration-flow) 
+
+13\. [The Gate-Keeping Mechanism](#13-the-gate-keeping-mechanism) 
+
+14\. [Common Patterns](#14-common-patterns) 
+
+15\. [Common Pitfalls](#15-common-pitfalls) 
+
+16\. [Technical Q&A](#16-technical-qa)
+
 
 ---
 
@@ -37,6 +50,7 @@
 React Router v6.4+ introduces a new data-centric approach using `RouterProvider` instead of the older `BrowserRouter` component pattern.
 
 **Old Pattern (v5/early v6):**
+
 ```javascript
 <BrowserRouter>
   <Routes>
@@ -47,6 +61,7 @@ React Router v6.4+ introduces a new data-centric approach using `RouterProvider`
 ```
 
 **New Pattern (v6.4+) - Used in this project:**
+
 ```javascript
 // Define routes as objects
 const router = createBrowserRouter([
@@ -61,12 +76,14 @@ const router = createBrowserRouter([
 ### Why This Matters
 
 **Route Objects** enable:
-- Programmatic route configuration
-- Route-level data loading
-- Easier testing and validation
-- Dynamic route generation from JSON/API
+
+* Programmatic route configuration
+* Route-level data loading
+* Easier testing and validation
+* Dynamic route generation from JSON/API
 
 **In App.jsx:**
+
 ```javascript
 import { RouterProvider } from "react-router-dom";
 import { router } from "./router";
@@ -83,6 +100,7 @@ The `router` is created once in `src/router/index.jsx` and passed to the provide
 **React Router version 6.4.0 or higher is REQUIRED** for `RouterProvider` and `createBrowserRouter` to work.
 
 **In your package.json:**
+
 ```json
 {
   "dependencies": {
@@ -92,17 +110,20 @@ The `router` is created once in `src/router/index.jsx` and passed to the provide
 ```
 
 **Why this matters:**
-- `RouterProvider` was introduced in **React Router v6.4**
-- Earlier versions (6.0-6.3) only support `BrowserRouter` with JSX routes
-- Using `RouterProvider` with v6.3 or below will cause runtime errors
+
+* `RouterProvider` was introduced in **React Router v6.4**
+* Earlier versions (6.0-6.3) only support `BrowserRouter` with JSX routes
+* Using `RouterProvider` with v6.3 or below will cause runtime errors
 
 **Check your version:**
+
 ```bash
 npm list react-router-dom
 # Should show: react-router-dom@6.4.0 or higher
 ```
 
 **If you have an older version:**
+
 ```bash
 npm install react-router-dom@latest
 # or
@@ -110,10 +131,12 @@ npm install react-router-dom@^6.4.0
 ```
 
 **Features requiring v6.4+:**
-- ✅ `RouterProvider` component
-- ✅ `createBrowserRouter` function
-- ✅ Data router features (loaders, actions)
-- ✅ Route objects pattern used in this project
+
+* ✅ `RouterProvider` component
+* ✅ `createBrowserRouter` function
+* ✅ Data router features (loaders, actions)
+* ✅ Route objects pattern used in this project
+
 
 ---
 
@@ -127,20 +150,19 @@ const route = {
   element: <ProductList />,    // Component to render
   children: [...],             // Nested routes
   handle: { ... },             // Custom metadata
-  errorElement: <Error />,     // Error boundary
-  loader: async () => {...}    // Data loading (optional)
 };
 ```
 
-### Comparison
+
 
 | Feature | JSX Routes | Route Objects |
-|---------|-----------|---------------|
+|----|----|----|
 | Syntax | `<Route path="/" element={<Home />} />` | `{ path: "/", element: <Home /> }` |
 | Dynamic | Harder | Easy |
 | Metadata | Via context | Via `handle` |
 | Type Safety | Limited | Full |
 | This Project | ❌ Not used | ✅ Used |
+
 
 ---
 
@@ -185,7 +207,7 @@ An **index route** renders when the parent path is exactly matched with no addit
 }
 ```
 
-**CRITICAL: `index: true` means NO path, renders at parent URL.**
+**CRITICAL:** `**index: true**` **means NO path, renders at parent URL.**
 
 #### `element` - Component to Render
 
@@ -246,6 +268,7 @@ const access = matches[0]?.handle?.access;
 
 **In this project:** `handle` stores access control configuration.
 
+
 ---
 
 ## 4. The Outlet Component
@@ -256,7 +279,7 @@ const access = matches[0]?.handle?.access;
 
 ### Where to Use It
 
-**In parent route components that have `children`:**
+**In parent route components that have** `**children**`**:**
 
 ```javascript
 // Route definition
@@ -316,7 +339,8 @@ Renders: <Layout><About /></Layout>
 // Renders: <Root><Layout><CheckoutLayout><Cart /></CheckoutLayout></Layout></Root>
 ```
 
-**Each level with children MUST have `<Outlet />`.**
+**Each level with children MUST have** `**<Outlet />**`**.**
+
 
 ---
 
@@ -348,9 +372,9 @@ function PrivateRoute({ children }) {
 
 ### Props
 
-- `to` - Destination path (required)
-- `replace` - Replace history entry instead of push (recommended for redirects)
-- `state` - Pass state to destination
+* `to` - Destination path (required)
+* `replace` - Replace history entry instead of push (recommended for redirects)
+* `state` - Pass state to destination
 
 ### Navigate vs useNavigate
 
@@ -363,9 +387,11 @@ const navigate = useNavigate();
 navigate("/login", { replace: true });
 ```
 
-**In this project:** 
-- `Navigate` used in route definitions for index redirects
-- `useNavigate` used in Root.jsx for programmatic navigation
+**In this project:**
+
+* `Navigate` used in route definitions for index redirects
+* `useNavigate` used in Root.jsx for programmatic navigation
+
 
 ---
 
@@ -407,6 +433,7 @@ const Home = lazy(() => import("@/components/pages/Homepage"));
 
 // Each wrapped in Suspense via createRoute()
 ```
+
 
 ---
 
@@ -485,10 +512,12 @@ createRoute({
 
 ### Why It Exists
 
+
 1. **DRY Principle** - Don't repeat Suspense wrapping
 2. **Centralized Access** - Pulls from routes.json
 3. **Consistent Metadata** - Standard handle structure
 4. **Easy Overrides** - Can override access per route
+
 
 ---
 
@@ -496,8 +525,10 @@ createRoute({
 
 **Two important concepts in this project:**
 
+
 1. **Route Ordering** - Order matters! React Router checks from top to bottom
 2. **createRoute Helper** - Wraps routes with automatic Suspense and access control
+
 
 ---
 
@@ -506,6 +537,7 @@ createRoute({
 React Router checks routes **from top to bottom** and uses the **first match**.
 
 **Wrong Order (Don't do this!):**
+
 ```javascript
 const routes = [
   { path: "*", element: <NotFound /> },     // Matches everything - WRONG!
@@ -515,6 +547,7 @@ const routes = [
 ```
 
 **Correct Order:**
+
 ```javascript
 const routes = [
   { path: "/", element: <Home /> },          // Check specific routes first
@@ -525,9 +558,12 @@ const routes = [
 ```
 
 **Simple Rules:**
+
+
 1. Specific paths before dynamic paths (`/products` before `/product/:id`)
 2. Static routes before parameter routes (`/product/new` before `/product/:id`)
 3. Wildcard `*` ALWAYS last
+
 
 ---
 
@@ -536,6 +572,7 @@ const routes = [
 **This project uses a helper function** to make routes cleaner:
 
 **Without createRoute (repetitive):**
+
 ```javascript
 {
   path: "products",
@@ -545,6 +582,7 @@ const routes = [
 ```
 
 **With createRoute (simple):**
+
 ```javascript
 createRoute({
   path: "products",
@@ -554,8 +592,10 @@ createRoute({
 ```
 
 **When to use:**
-- ✅ Page routes (Login, Home, ProductDetail, etc.)
-- ❌ Layout routes (Root, Layout - they need `<Outlet />`)
+
+* ✅ Page routes (Login, Home, ProductDetail, etc.)
+* ❌ Layout routes (Root, Layout - they need `<Outlet />`)
+
 
 ---
 
@@ -608,14 +648,16 @@ export const router = createBrowserRouter(routes);
 ```
 
 **Key Points:**
-- Use `createRoute()` for pages
-- Use plain objects for layouts (Root, Layout)
-- Put wildcard `*` at the end
-- Order: specific → dynamic → wildcard
+
+* Use `createRoute()` for pages
+* Use plain objects for layouts (Root, Layout)
+* Put wildcard `*` at the end
+* Order: specific → dynamic → wildcard
 
 #### Common Mistakes
 
 **Mistake 1: Wildcard first**
+
 ```javascript
 // ❌ Wrong - wildcard catches everything
 { path: "*", element: <NotFound /> },
@@ -623,6 +665,7 @@ export const router = createBrowserRouter(routes);
 ```
 
 **Mistake 2: Dynamic before static**
+
 ```javascript
 // ❌ Wrong - :id matches "new"
 { path: "/product/:id", element: <ProductDetail /> },
@@ -634,6 +677,7 @@ export const router = createBrowserRouter(routes);
 ```
 
 **Remember:** Specific first, wildcard last!
+
 
 ---
 
@@ -702,15 +746,18 @@ This project uses **three interconnected files** to implement authentication-awa
 ### Why Three Files?
 
 **Separation of Concerns:**
-- `apperClient.js` - SDK integration layer
-- `userSlice.js` - State management layer  
-- `Root.jsx` - Orchestration and routing layer
+
+* `apperClient.js` - SDK integration layer
+* `userSlice.js` - State management layer
+* `Root.jsx` - Orchestration and routing layer
 
 **Benefits:**
-- Testable (each file can be tested independently)
-- Maintainable (changes isolated to relevant layer)
-- Reusable (apperClient and userSlice used throughout app)
-- Clear responsibilities
+
+* Testable (each file can be tested independently)
+* Maintainable (changes isolated to relevant layer)
+* Reusable (apperClient and userSlice used throughout app)
+* Clear responsibilities
+
 
 ---
 
@@ -721,13 +768,14 @@ This project uses **three interconnected files** to implement authentication-awa
 `routes.json` is a declarative configuration file that defines access control rules for routes. Instead of hardcoding permissions in components, you define them in JSON format.
 
 **Why JSON?**
-- Easy to modify without touching code
-- Clear overview of all route permissions
-- Non-developers can understand and audit
+
+* Easy to modify without touching code
+* Clear overview of all route permissions
+* Non-developers can understand and audit
 
 ### ⚠️ Critical: File Path Must Not Change
 
-**The file path `src/router/routes.json` is FIXED and should not be changed.**
+**The file path** `**src/router/routes.json**` **is FIXED and should not be changed.**
 
 ```
 src/
@@ -738,15 +786,18 @@ src/
 ```
 
 **Why this path is fixed:**
-- **Backend service uses this path** to deliver route configuration to the frontend
-- The backend expects `src/router/routes.json` as the target location
-- This is the contract between backend and frontend for UI configuration
-- `route.utils.js` imports from `"./routes.json"` (relative path)
+
+* **Backend service uses this path** to deliver route configuration to the frontend
+* The backend expects `src/router/routes.json` as the target location
+* This is the contract between backend and frontend for UI configuration
+* `route.utils.js` imports from `"./routes.json"` (relative path)
 
 **Important:**
-- Do NOT move or rename this file
-- Backend service depends on this exact path
-- Changing it will break both frontend UI
+
+* Do NOT move or rename this file
+* Backend service depends on this exact path
+* Changing it will break both frontend UI
+
 
 ---
 
@@ -775,7 +826,7 @@ There are two approaches to define access control:
 }
 ```
 
-#### Approach 2: Custom Function (Reusable Logic)
+#### Approach 2: Custom Function 
 
 ```json
 {
@@ -789,16 +840,18 @@ There are two approaches to define access control:
 ```
 
 **Properties:**
-- **`/path`** - Route pattern (exact, parameter, or wildcard)
-- **`allow`** - Access configuration object
-- **`when`** - Contains conditions for inline rule evaluation
-- **`conditions`** - Array of rules to check
-- **`label`** - Description for errors/debugging
-- **`rule`** - The actual access rule (JavaScript expression or built-in)
-- **`operator`** - `"OR"` (default) or `"AND"`
-- **`function`** - Name of registered custom function (alternative to `when`)
-- **`redirectOnDeny`** - Custom redirect path when access is denied (optional, defaults to `/login`)
-- **`excludeRedirectQuery`** - Boolean, when `true`, prevents adding `?redirect=` query parameter on denial (optional, defaults to `false`)
+
+* `**/path**` - Route pattern (exact, parameter, or wildcard)
+* `**allow**` - Access configuration object
+* `**when**` - Contains conditions for inline rule evaluation
+* `**conditions**` - Array of rules to check
+* `**label**` - Description for errors/debugging
+* `**rule**` - The actual access rule (JavaScript expression or built-in)
+* `**operator**` - `"OR"` (default) or `"AND"`
+* `**function**` - Name of registered custom function (alternative to `when`)
+* `**redirectOnDeny**` - Custom redirect path when access is denied (optional, defaults to `/login`)
+* `**excludeRedirectQuery**` - Boolean, when `true`, prevents adding `?redirect=` query parameter on denial (optional, defaults to `false`)
+
 
 ---
 
@@ -806,7 +859,8 @@ There are two approaches to define access control:
 
 #### 1. Built-in Rules
 
-**`public`** - Anyone can access
+`**public**` - Anyone can access
+
 ```json
 {
   "/": {
@@ -819,7 +873,8 @@ There are two approaches to define access control:
 }
 ```
 
-**`authenticated`** - Must be logged in
+`**authenticated**` - Must be logged in
+
 ```json
 {
   "/dashboard": {
@@ -838,15 +893,59 @@ There are two approaches to define access control:
 **Important:** The rule system uses **JavaScript expressions** for maximum flexibility. Any valid JavaScript expression that evaluates to a boolean can be used as a rule.
 
 **How it works:**
-- All user object properties are available as variables in your expression
-- The expression is evaluated using `new Function()` with user properties as context
-- Return value is coerced to boolean
+
+* All user object properties are available as variables in your expression
+* The expression is evaluated using `new Function()` with user properties as context
+* Return value is coerced to boolean
+
+
+---
+
+##### 🔑 Key Rule: Write Properties WITHOUT `user.`
+
+**In routes.json, write property names directly:**
+
+✅ **CORRECT:**
+```json
+{
+  "rule": "emailAddress == \"admin@example.com\""
+}
+```
+
+❌ **WRONG:**
+```json
+{
+  "rule": "user.emailAddress == \"admin@example.com\""
+}
+```
+
+**Why?**
+The system automatically makes all user properties available by name. You can directly use `emailAddress`, `roles`, `userMetadata`, etc.
+
+**More Examples:**
+
+| ✅ Write This | ❌ Not This |
+|--------------|------------|
+| `emailAddress == "admin@example.com"` | `user.emailAddress == "admin@example.com"` |
+| `userMetadata.isExternal` | `user.userMetadata.isExternal` |
+| `roles && roles.includes('admin')` | `user.roles && user.roles.includes('admin')` |
+| `accounts[0].profile.name == 'CEO'` | `user.accounts[0].profile.name == 'CEO'` |
+
+**Think of it like this:**
+```javascript
+// You have access to:
+emailAddress, roles, userMetadata, accounts, etc.
+
+// You DON'T have access to:
+user.emailAddress ❌  // 'user' doesn't exist in rules!
+```
 
 ---
 
 ##### JavaScript Expression Examples
 
 **Check email address:**
+
 ```json
 {
   "/admin": {
@@ -865,6 +964,7 @@ There are two approaches to define access control:
 ```
 
 **Check nested object property:**
+
 ```json
 {
   "/admin/**/*": {
@@ -883,6 +983,7 @@ There are two approaches to define access control:
 ```
 
 **Check user metadata:**
+
 ```json
 {
   "/external": {
@@ -899,6 +1000,7 @@ There are two approaches to define access control:
 ```
 
 **Complex boolean logic:**
+
 ```json
 {
   "/admin/dashboard": {
@@ -916,6 +1018,7 @@ There are two approaches to define access control:
 ```
 
 **Array operations:**
+
 ```json
 {
   "/moderators": {
@@ -930,6 +1033,7 @@ There are two approaches to define access control:
 }
 ```
 
+
 ---
 
 ##### Available Context in Rules
@@ -937,6 +1041,7 @@ There are two approaches to define access control:
 When writing JavaScript expressions, all user object properties are available as variables:
 
 **Example user object:**
+
 ```javascript
 {
   id: "user123",
@@ -958,18 +1063,20 @@ When writing JavaScript expressions, all user object properties are available as
 ```
 
 **Available variables in rules:**
-- `id`
-- `emailAddress`
-- `roles`
-- `accounts`
-- `userMetadata`
-- Any other property in the user object
+
+* `id`
+* `emailAddress`
+* `roles`
+* `accounts`
+* `userMetadata`
+* Any other property in the user object
 
 #### 3. Custom Functions (Reusable Logic)
 
 For complex or reusable authorization logic, use custom functions instead of inline expressions.
 
-**Define in `route.utils.js`:**
+**Define in** `**route.utils.js**`**:**
+
 ```javascript
 const customFunctions = {
     isCEO: (user) => {
@@ -984,7 +1091,8 @@ const customFunctions = {
 };
 ```
 
-**Use in `routes.json`:**
+**Use in** `**routes.json**`**:**
+
 ```json
 {
   "/admin/*": {
@@ -1003,23 +1111,28 @@ const customFunctions = {
 ```
 
 **When to use custom functions:**
-- Complex logic that's hard to read as inline expressions
-- Reusable logic across multiple routes
-- Logic requiring try-catch error handling
-- Better performance for expensive computations (can add caching)
+
+* Complex logic that's hard to read as inline expressions
+* Reusable logic across multiple routes
+* Logic requiring try-catch error handling
+* Better performance for expensive computations (can add caching)
+
 
 ---
 
-**Remember:** 
-- Return `true` (allowed) or `false` (denied)
-- Check specific patterns before generic ones
-- Add comments to explain your logic
+**Remember:**
+
+* Return `true` (allowed) or `false` (denied)
+* Check specific patterns before generic ones
+* Add comments to explain your logic
+
 
 ---
 
 ### Operators
 
 **AND** - All conditions must pass (recommended for admin routes):
+
 ```json
 {
   "/admin": {
@@ -1037,9 +1150,11 @@ const customFunctions = {
   }
 }
 ```
+
 Only users who are logged in AND have admin email can access.
 
 **OR** - At least one condition must pass:
+
 ```json
 {
   "/dashboard": {
@@ -1055,38 +1170,49 @@ Only users who are logged in AND have admin email can access.
   }
 }
 ```
+
 Either logged in users OR admins can access.
 
 **Note:** Default operator is `"OR"` when not specified, but it's recommended to explicitly set `"operator": "AND"` for admin routes to ensure all conditions must pass.
+
 
 ---
 
 ### Route Patterns
 
 #### 1. Exact Path
+
 ```json
 {"/dashboard": {...}}
 ```
+
 Matches: `/dashboard` only
 
 #### 2. Parameter Route
+
 ```json
 {"/product/:id": {...}}
 ```
+
 Matches: `/product/123`, `/product/abc`, etc.
 
 #### 3. Single-Level Wildcard
+
 ```json
 {"/admin/*": {...}}
 ```
-Matches: `/admin/users`, `/admin/settings`  
+
+Matches: `/admin/users`, `/admin/settings`
 Doesn't match: `/admin/users/edit` (too deep)
 
 #### 4. Multi-Level Wildcard
+
 ```json
 {"/admin/**/*": {...}}
 ```
+
 Matches: `/admin/users`, `/admin/users/edit`, `/admin/users/edit/123` (any depth)
+
 
 ---
 
@@ -1095,12 +1221,14 @@ Matches: `/admin/users`, `/admin/users/edit`, `/admin/users/edit/123` (any depth
 When multiple patterns match, the most specific wins:
 
 **Scoring:**
-- Exact paths: 1000 + length
-- Parameter routes: 500 + length
-- Single wildcards: 300 + length
-- Multi-level wildcards: 100 + length
+
+* Exact paths: 1000 + length
+* Parameter routes: 500 + length
+* Single wildcards: 300 + length
+* Multi-level wildcards: 100 + length
 
 **Example:**
+
 ```
 Path: /admin/users
 
@@ -1108,6 +1236,7 @@ Matches:
 - /admin/* (score: 308) ← WINNER
 - /admin/**/* (score: 111)
 ```
+
 
 ---
 
@@ -1146,11 +1275,13 @@ Matches:
 ```
 
 **Why organize this way?**
-- Easy to find routes
-- Clear access levels
-- Good for team collaboration
+
+* Easy to find routes
+* Clear access levels
+* Good for team collaboration
 
 **Remember:** Exact paths → Wildcards → Multi-level wildcards
+
 
 ---
 
@@ -1203,15 +1334,18 @@ Matches:
 }
 ```
 
+
 ---
 
 ### Best Practices
+
 
 1. **Organize by access level** - Group public, authenticated, admin routes
 2. **Use wildcards for groups** - `/admin/*` instead of listing each admin route
 3. **Always make auth pages public** - `/login`, `/signup`, `/callback`, `/error`
 4. **Use descriptive labels** - Helps with debugging and error messages
 5. **Default is authenticated** - Unknown routes require login by default
+
 
 ---
 
@@ -1222,11 +1356,14 @@ Matches:
 `route.utils.js` reads `routes.json` and verifies if users can access routes. It handles pattern matching, rule evaluation, and determines where to redirect unauthorized users.
 
 **Core Functions:**
+
+
 1. `getRouteConfig(path)` - Find matching route config
 2. `matchesPattern(path, pattern)` - Check if path matches pattern
 3. `getSpecificity(pattern)` - Calculate pattern priority
 4. `evaluateRule(rule, user)` - Check if rule passes
 5. `verifyRouteAccess(config, user)` - Verify access and determine redirect
+
 
 ---
 
@@ -1235,6 +1372,7 @@ Matches:
 **Purpose:** Get access configuration for a path
 
 **How it works:**
+
 ```
 1. Normalize path ("admin" → "/admin")
 2. Check for exact match first
@@ -1244,6 +1382,7 @@ Matches:
 ```
 
 **Code:**
+
 ```javascript
 export const getRouteConfig = (path) => {
     // Normalize
@@ -1271,6 +1410,7 @@ export const getRouteConfig = (path) => {
 ```
 
 **Examples:**
+
 ```javascript
 getRouteConfig("/dashboard") 
 // → Exact match returns config
@@ -1286,6 +1426,7 @@ getRouteConfig("/unknown/route")
 
 **Key Change:** Returns `null` instead of default authenticated config. This allows React Router to handle unmatched routes naturally (404 pages), rather than forcing authentication on every unknown route.
 
+
 ---
 
 ### Function 2: matchesPattern(path, pattern)
@@ -1293,6 +1434,7 @@ getRouteConfig("/unknown/route")
 **Purpose:** Check if a path matches a route pattern
 
 **Code:**
+
 ```javascript
 function matchesPattern(path, pattern) {
     // Exact match
@@ -1323,6 +1465,7 @@ function matchesPattern(path, pattern) {
 ```
 
 **Examples:**
+
 ```javascript
 // Exact
 matchesPattern("/dashboard", "/dashboard") → true
@@ -1339,6 +1482,7 @@ matchesPattern("/admin/users/edit", "/admin/*") → false (too deep)
 matchesPattern("/admin/users/edit", "/admin/**/*") → true
 ```
 
+
 ---
 
 ### Function 3: getSpecificity(pattern)
@@ -1346,6 +1490,7 @@ matchesPattern("/admin/users/edit", "/admin/**/*") → true
 **Purpose:** Calculate pattern priority score
 
 **Code:**
+
 ```javascript
 function getSpecificity(pattern) {
     let score = 0;
@@ -1378,12 +1523,14 @@ function getSpecificity(pattern) {
 ```
 
 **Examples:**
+
 ```javascript
 getSpecificity("/admin")         → 1006 (exact)
 getSpecificity("/product/:id")   → 512 (parameter)
 getSpecificity("/admin/*")       → 308 (single wildcard)
 getSpecificity("/admin/**/*")    → 111 (multi wildcard)
 ```
+
 
 ---
 
@@ -1394,6 +1541,7 @@ getSpecificity("/admin/**/*")    → 111 (multi wildcard)
 **This handles built-in rules and delegates to dynamic evaluation!**
 
 **Code:**
+
 ```javascript
 function evaluateRule(rule, user) {
     // Built-in rules
@@ -1406,6 +1554,7 @@ function evaluateRule(rule, user) {
 ```
 
 **Examples:**
+
 ```javascript
 evaluateRule("public", null)                                      → true
 evaluateRule("authenticated", null)                               → false
@@ -1414,6 +1563,7 @@ evaluateRule("emailAddress == \"admin@example.com\"", user)       → true/false
 evaluateRule("roles && roles.includes('admin')", user)            → true/false
 evaluateRule("accounts[0].profile.name == 'CEO'", user)           → true/false
 ```
+
 
 ---
 
@@ -1424,6 +1574,7 @@ evaluateRule("accounts[0].profile.name == 'CEO'", user)           → true/false
 **This is the magic that makes JavaScript expressions work!**
 
 **Code:**
+
 ```javascript
 function evaluateDynamicRule(rule, user) {
     if (!user) return false;
@@ -1456,6 +1607,7 @@ function evaluateDynamicRule(rule, user) {
 
 **How it works:**
 
+
 1. **Extract user properties**: Gets all keys and values from user object
 2. **Wrap rule**: Adds `return` statement if missing
 3. **Create dynamic function**: Uses `new Function()` with user properties as parameters
@@ -1463,6 +1615,7 @@ function evaluateDynamicRule(rule, user) {
 5. **Return boolean**: Ensures result is boolean
 
 **Example flow:**
+
 ```javascript
 // Rule: "emailAddress == \"admin@example.com\""
 // User: { id: 123, emailAddress: "admin@example.com", roles: ["admin"] }
@@ -1490,6 +1643,7 @@ return true
 
 **Error Handling:** If expression fails (syntax error, undefined property, etc.), it logs error and returns `false` (denies access).
 
+
 ---
 
 ### Function 4b: executeCustomFunction(functionName, user)
@@ -1497,6 +1651,7 @@ return true
 **Purpose:** Execute registered custom functions for complex reusable logic
 
 **Code:**
+
 ```javascript
 // Custom functions registry at top of file
 const customFunctions = {
@@ -1525,12 +1680,14 @@ function executeCustomFunction(functionName, user) {
 
 **How it works:**
 
+
 1. **Look up function**: Finds function in `customFunctions` registry
 2. **Error if not found**: Logs error and denies access
 3. **Execute function**: Calls function with user object
 4. **Return boolean**: Coerces result to boolean
 
 **Example:**
+
 ```javascript
 // In routes.json
 {
@@ -1548,10 +1705,12 @@ executeCustomFunction("isCEO", user)
 ```
 
 **When to use custom functions:**
-- Complex logic that spans multiple conditions
-- Reusable logic across multiple routes
-- Logic requiring try-catch or external calls
-- Better performance (can add memoization/caching)
+
+* Complex logic that spans multiple conditions
+* Reusable logic across multiple routes
+* Logic requiring try-catch or external calls
+* Better performance (can add memoization/caching)
+
 
 ---
 
@@ -1560,6 +1719,7 @@ executeCustomFunction("isCEO", user)
 **Purpose:** Verify if user can access route and determine redirect
 
 **Code:**
+
 ```javascript
 export function verifyRouteAccess(config, user) {
     // If no config exists, allow access (let React Router handle it)
@@ -1617,6 +1777,7 @@ export function verifyRouteAccess(config, user) {
 ```
 
 **Return Structure:**
+
 ```javascript
 {
   allowed: boolean,               // Can user access?
@@ -1627,6 +1788,7 @@ export function verifyRouteAccess(config, user) {
 ```
 
 **Examples:**
+
 ```javascript
 // No config (let React Router handle)
 verifyRouteAccess(null, user)
@@ -1674,6 +1836,7 @@ verifyRouteAccess(
 → {allowed: false, redirectTo: "/error?message=admin_access_required", excludeRedirectQuery: true, failed: ["Must be admin"]}
 ```
 
+
 ---
 
 ### How It All Works Together
@@ -1694,9 +1857,11 @@ if (!allowed) {
 ```
 
 **That's it!** The system automatically:
-- Finds the right route config
-- Checks all access rules
-- Redirects if needed
+
+* Finds the right route config
+* Checks all access rules
+* Redirects if needed
+
 
 ---
 
@@ -1705,6 +1870,7 @@ if (!allowed) {
 **Approach 1: JavaScript Expressions (Inline)**
 
 Write expressions directly in `routes.json`:
+
 ```json
 {
   "/admin": {
@@ -1723,12 +1889,12 @@ Write expressions directly in `routes.json`:
 }
 ```
 
-**Pros:** Simple, declarative, no code changes needed
-**Cons:** Can get complex for advanced logic
+**Pros:** Simple, declarative, no code changes needed **Cons:** Can get complex for advanced logic
 
 **Approach 2: Custom Functions (Reusable)**
 
 Register function in `route.utils.js`:
+
 ```javascript
 const customFunctions = {
   isCEO: (user) => {
@@ -1738,6 +1904,7 @@ const customFunctions = {
 ```
 
 Use in `routes.json`:
+
 ```json
 {
   "/admin/*": {
@@ -1750,8 +1917,8 @@ Use in `routes.json`:
 }
 ```
 
-**Pros:** Reusable, testable, cleaner for complex logic
-**Cons:** Requires code changes in route.utils.js
+**Pros:** Reusable, testable, cleaner for complex logic **Cons:** Requires code changes in route.utils.js
+
 
 ---
 
@@ -1764,6 +1931,7 @@ Use in `routes.json`:
 **Default behavior:** If not specified, users are redirected to `/login`
 
 **Usage:**
+
 ```json
 {
   "/admin": {
@@ -1786,9 +1954,11 @@ Use in `routes.json`:
 ```
 
 **Benefits:**
-- Better UX - users see relevant error messages
-- Custom upgrade flows for premium features
-- Different redirects for different denial reasons
+
+* Better UX - users see relevant error messages
+* Custom upgrade flows for premium features
+* Different redirects for different denial reasons
+
 
 ---
 
@@ -1798,12 +1968,14 @@ Use in `routes.json`:
 
 **Default behavior:** `false` - The redirect query parameter IS added (e.g., `/login?redirect=%2Fdashboard`)
 
-**When to use `excludeRedirectQuery: true`:**
-- **Error pages** - Users shouldn't return to the page they couldn't access
-- **Admin-only areas** - Non-admins shouldn't be redirected back after attempting access
-- **Prevent redirect loops** - When the redirect destination might fail the same access check
+**When to use** `**excludeRedirectQuery: true**`**:**
+
+* **Error pages** - Users shouldn't return to the page they couldn't access
+* **Admin-only areas** - Non-admins shouldn't be redirected back after attempting access
+* **Prevent redirect loops** - When the redirect destination might fail the same access check
 
 **Usage in routes.json:**
+
 ```json
 {
   "/admin": {
@@ -1835,14 +2007,16 @@ Use in `routes.json`:
 
 **How it works:**
 
-**Without `excludeRedirectQuery` (default behavior):**
+**Without** `**excludeRedirectQuery**` **(default behavior):**
+
 ```
 User tries to access: /dashboard
 Access denied → Redirected to: /login?redirect=%2Fdashboard
 After login → Redirected back to: /dashboard ✓
 ```
 
-**With `excludeRedirectQuery: true`:**
+**With** `**excludeRedirectQuery: true**`**:**
+
 ```
 User tries to access: /admin
 Access denied → Redirected to: /error?message=admin_access_required
@@ -1869,15 +2043,18 @@ navigate(redirectUrl, { replace: true });
 ```
 
 **Key points:**
-- Separator logic handles both `?` and `&` for URLs with existing query params
-- When excluded, only the `redirectOnDeny` path is used (clean redirect)
-- Prevents infinite redirect loops for pages that can never be accessed
+
+* Separator logic handles both `?` and `&` for URLs with existing query params
+* When excluded, only the `redirectOnDeny` path is used (clean redirect)
+* Prevents infinite redirect loops for pages that can never be accessed
+
 
 ---
 
 ### JavaScript Expression Safety
 
 **How expressions are evaluated:**
+
 
 1. User properties extracted: `Object.keys(user)` and `Object.values(user)`
 2. Dynamic function created: `new Function(...keys, wrappedRule)`
@@ -1886,25 +2063,27 @@ navigate(redirectUrl, { replace: true });
 
 **Security considerations:**
 
-✅ **Safe:** Expressions come from `routes.json` in your codebase
-✅ **Safe:** Not evaluated from end-user input
-❌ **Unsafe:** Never evaluate expressions from untrusted sources
+✅ **Safe:** Expressions come from `routes.json` in your codebase ✅ **Safe:** Not evaluated from end-user input ❌ **Unsafe:** Never evaluate expressions from untrusted sources
 
 **Error handling:**
-- Syntax errors → logged and return `false` (deny access)
-- Undefined properties → logged and return `false`
-- Runtime errors → logged and return `false`
+
+* Syntax errors → logged and return `false` (deny access)
+* Undefined properties → logged and return `false`
+* Runtime errors → logged and return `false`
 
 **Best practices:**
-- Use safe navigation: `userMetadata && userMetadata.department`
-- Avoid complex logic - use custom functions instead
-- Test expressions with various user objects
+
+* Use safe navigation: `userMetadata && userMetadata.department`
+* Avoid complex logic - use custom functions instead
+* Test expressions with various user objects
+
 
 ---
 
 ### Custom Functions Registry Pattern
 
 **Structure:**
+
 ```javascript
 // At top of route.utils.js
 const customFunctions = {
@@ -1916,6 +2095,7 @@ const customFunctions = {
 ```
 
 **Example - Complex authorization:**
+
 ```javascript
 const customFunctions = {
   isCEO: (user) => {
@@ -1946,6 +2126,7 @@ const customFunctions = {
 ```
 
 **Usage in routes.json:**
+
 ```json
 {
   "/admin/*": {
@@ -1966,11 +2147,13 @@ const customFunctions = {
 ```
 
 **When to use custom functions:**
-- Logic spans multiple conditions with complex boolean operations
-- Need try-catch error handling
-- Want to call external services or perform async checks (with caching)
-- Same logic used across multiple routes
-- Logic too complex to read as inline expression
+
+* Logic spans multiple conditions with complex boolean operations
+* Need try-catch error handling
+* Want to call external services or perform async checks (with caching)
+* Same logic used across multiple routes
+* Logic too complex to read as inline expression
+
 
 ---
 
@@ -2015,15 +2198,15 @@ You can use both `when` conditions and custom functions in the same `routes.json
 ```
 
 **Decision guide:**
-- **Simple single check** → Inline expression (`authenticated`, `public`)
-- **Property comparison** → Inline expression (`emailAddress == "admin@example.com"`)
-- **Multiple conditions** → Inline with AND operator for admin routes
-- **Complex multi-step logic** → Custom function (like `isCEO`)
-- **Reusable across routes** → Custom function
+
+* **Simple single check** → Inline expression (`authenticated`, `public`)
+* **Property comparison** → Inline expression (`emailAddress == "admin@example.com"`)
+* **Multiple conditions** → Inline with AND operator for admin routes
+* **Complex multi-step logic** → Custom function (like `isCEO`)
+* **Reusable across routes** → Custom function
+
 
 ---
-
-### Backward Compatibility
 
 The new structure maintains backward compatibility:
 
@@ -2053,6 +2236,7 @@ This means you can have both old and new formats in the same file during migrati
 ```
 
 However, **best practice** is to use the new `when` structure consistently.
+
 
 ---
 
@@ -2185,9 +2369,10 @@ export default getSingleton;
 #### 1. Singleton Pattern
 
 **Problem:** Multiple `new ApperClient()` calls create:
-- Multiple auth checks
-- Conflicting state
-- Wasted resources
+
+* Multiple auth checks
+* Conflicting state
+* Wasted resources
 
 **Solution:** Class ensures ONE instance reused everywhere.
 
@@ -2272,6 +2457,7 @@ const initializeAuth = async () => {
     }
 };
 ```
+
 
 ---
 
@@ -2376,9 +2562,10 @@ null
 ```
 
 **Used for:**
-- Displaying user info
-- Access control checks
-- API authentication headers
+
+* Displaying user info
+* Access control checks
+* API authentication headers
 
 #### 2. `isAuthenticated` - Boolean Flag
 
@@ -2389,14 +2576,16 @@ isAuthenticated: false  // user === null
 ```
 
 **Used for:**
-- Conditional rendering: `{isAuthenticated && <ProfileMenu />}`
-- Quick access checks
-- UI state management
 
-**Why separate from `user`?**
-- Cleaner code: `if (isAuthenticated)` vs `if (user !== null)`
-- Performance: No need to check nested properties
-- Semantic clarity: Explicitly shows auth status
+* Conditional rendering: `{isAuthenticated && <ProfileMenu />}`
+* Quick access checks
+* UI state management
+
+**Why separate from** `**user**`**?**
+
+* Cleaner code: `if (isAuthenticated)` vs `if (user !== null)`
+* Performance: No need to check nested properties
+* Semantic clarity: Explicitly shows auth status
 
 #### 3. `isInitialized` - THE GATE KEY 🔑
 
@@ -2426,6 +2615,7 @@ isInitialized = true → Route guards activate
 **Why This Exists:**
 
 Without `isInitialized`:
+
 ```javascript
 // BAD - Runs immediately on mount
 useEffect(() => {
@@ -2438,6 +2628,7 @@ useEffect(() => {
 ```
 
 With `isInitialized`:
+
 ```javascript
 // GOOD - Waits for auth check
 useEffect(() => {
@@ -2467,9 +2658,10 @@ state.user = JSON.parse(JSON.stringify(user));  // New object
 ```
 
 **Alternatives:**
-- `structuredClone(action.payload)` (newer, better)
-- `{ ...action.payload }` (shallow only)
-- Immer (built into Redux Toolkit, but explicit clone is safer)
+
+* `structuredClone(action.payload)` (newer, better)
+* `{ ...action.payload }` (shallow only)
+* Immer (built into Redux Toolkit, but explicit clone is safer)
 
 ### Actions Usage
 
@@ -2518,6 +2710,7 @@ function Component() {
   return <div>Welcome, {user.name}</div>;
 }
 ```
+
 
 ---
 
@@ -2798,6 +2991,7 @@ Both true → Render routes + Check access
 ```
 
 Without local state:
+
 ```javascript
 // BAD
 if (!isInitialized) return <Spinner />;
@@ -2811,6 +3005,7 @@ if (!isInitialized) return <Spinner />;
 ```
 
 With local state:
+
 ```javascript
 // GOOD
 if (!authInitialized) return <Spinner />;
@@ -3001,19 +3196,21 @@ Scenario 3: Already on public page
   → Stay on /products
 ```
 
+
 ---
 
-## 11.5. Route Guard Deep Dive
+## 11.1. Route Guard Deep Dive
 
 ### Overview
 
 The route guard `useEffect` is the **most critical piece of code** for enforcing access control in this architecture. It runs on every navigation after authentication completes and determines whether the user can access the requested route.
 
 **This single useEffect is responsible for:**
-- Fetching access rules for the current route
-- Verifying user permissions
-- Redirecting unauthorized users
-- Preserving intended destination for post-login navigation
+
+* Fetching access rules for the current route
+* Verifying user permissions
+* Redirecting unauthorized users
+* Preserving intended destination for post-login navigation
 
 ### The Complete Code
 
@@ -3050,32 +3247,36 @@ useEffect(() => {
 
 #### Lines 1-2: Early Return Guards
 
-**Guard 1: `if (!isInitialized) return;`**
+**Guard 1:** `**if (!isInitialized) return;**`
 
 **THE GATE** - This is the critical check that prevents the route guard from running before authentication completes.
 
 **Why this matters:**
-- Without this check, the guard runs with `user = null`
-- Would redirect to login immediately
-- When auth completes and user exists, would redirect back
-- Creates infinite redirect loop
+
+* Without this check, the guard runs with `user = null`
+* Would redirect to login immediately
+* When auth completes and user exists, would redirect back
+* Creates infinite redirect loop
 
 **State values:**
-- `false` → Early return, skip entire effect (auth still initializing)
-- `true` → Auth complete, continue to check route access
+
+* `false` → Early return, skip entire effect (auth still initializing)
+* `true` → Auth complete, continue to check route access
 
 **Why early return?**
-- Cleaner code - no nested if blocks
-- Better readability - guards at the top
-- Follows guard pattern best practice
+
+* Cleaner code - no nested if blocks
+* Better readability - guards at the top
+* Follows guard pattern best practice
 
 #### Line 4-5: Get Route Configuration
 
-**`const config = getRouteConfig(location.pathname);`**
+`**const config = getRouteConfig(location.pathname);**`
 
 Fetches access control rules for the current route from `routes.json`.
 
 **What it does:**
+
 ```javascript
 // location.pathname = "/admin/users"
 
@@ -3102,27 +3303,30 @@ Fetches access control rules for the current route from `routes.json`.
 
 #### Line 7-8: Guard 2 - Config Validation
 
-**`if (!config?.allow) return;`**
+`**if (!config?.allow) return;**`
 
 **Purpose:** Exit early if route has no access control configured
 
 **Why this guard?**
-- Some routes might not be in `routes.json` (returns `null`)
-- Allows React Router to handle 404 pages naturally
-- Prevents errors from accessing undefined properties
 
-**Optional chaining (`?.`):**
-- Safely checks if `config` exists AND has `allow` property
-- Returns `undefined` if chain breaks at any point
-- Prevents "Cannot read property of null" errors
+* Some routes might not be in `routes.json` (returns `null`)
+* Allows React Router to handle 404 pages naturally
+* Prevents errors from accessing undefined properties
+
+**Optional chaining (**`**?.**`**):**
+
+* Safely checks if `config` exists AND has `allow` property
+* Returns `undefined` if chain breaks at any point
+* Prevents "Cannot read property of null" errors
 
 #### Line 11: Verify Access with All Return Values
 
-**`const { allowed, redirectTo, excludeRedirectQuery } = verifyRouteAccess(config.allow, user);`**
+`**const { allowed, redirectTo, excludeRedirectQuery } = verifyRouteAccess(config.allow, user);**`
 
 Evaluates whether the current user meets the access requirements.
 
 **What it does:**
+
 ```javascript
 // Given:
 // config.allow = {
@@ -3153,6 +3357,7 @@ Evaluates whether the current user meets the access requirements.
 ```
 
 **If denied:**
+
 ```javascript
 // user = null (not authenticated)
 
@@ -3169,23 +3374,25 @@ Evaluates whether the current user meets the access requirements.
 
 #### Line 14: Guard 3 - Access Check
 
-**`if (allowed || !redirectTo) return;`**
+`**if (allowed || !redirectTo) return;**`
 
 **Purpose:** Exit early if user has access OR no redirect is needed
 
 **Decision tree:**
-- `allowed = true` → Early return, let page render ✓
-- `allowed = false` AND `redirectTo = null` → Early return (shouldn't happen)
-- `allowed = false` AND `redirectTo = "/login"` → Continue to redirect logic
+
+* `allowed = true` → Early return, let page render ✓
+* `allowed = false` AND `redirectTo = null` → Early return (shouldn't happen)
+* `allowed = false` AND `redirectTo = "/login"` → Continue to redirect logic
 
 **Why combined check?**
-- Single line instead of nested ifs
-- Both conditions result in same action (do nothing)
-- More readable and maintainable
+
+* Single line instead of nested ifs
+* Both conditions result in same action (do nothing)
+* More readable and maintainable
 
 #### Lines 17-24: Build Redirect URL
 
-**`let redirectUrl = redirectTo;`**
+`**let redirectUrl = redirectTo;**`
 
 Start with the base redirect path from config.
 
@@ -3201,40 +3408,43 @@ if (!excludeRedirectQuery) {
 
 **Logic breakdown:**
 
-1. **Check `excludeRedirectQuery` flag:**
-   - If `true` → Skip adding redirect parameter (clean redirect)
-   - If `false` → Add redirect parameter (preserve destination)
 
+1. **Check** `**excludeRedirectQuery**` **flag:**
+   * If `true` → Skip adding redirect parameter (clean redirect)
+   * If `false` → Add redirect parameter (preserve destination)
 2. **Capture current location:**
+
    ```javascript
    const redirectPath = location.pathname + location.search;
    ```
-   Examples:
-   - `/dashboard` → `/dashboard`
-   - `/products?category=electronics` → `/products?category=electronics`
-   - `/product/123?variant=blue` → `/product/123?variant=blue`
 
+   Examples:
+   * `/dashboard` → `/dashboard`
+   * `/products?category=electronics` → `/products?category=electronics`
+   * `/product/123?variant=blue` → `/product/123?variant=blue`
 3. **Smart separator selection:**
+
    ```javascript
    const separator = redirectTo.includes('?') ? '&' : '?';
    ```
-   - If `redirectTo` already has query params → Use `&`
-   - If `redirectTo` has no query params → Use `?`
-   
-   Examples:
-   - `/login` → Use `?` → `/login?redirect=...`
-   - `/error?message=admin` → Use `&` → `/error?message=admin&redirect=...`
+   * If `redirectTo` already has query params → Use `&`
+   * If `redirectTo` has no query params → Use `?`
 
+   Examples:
+   * `/login` → Use `?` → `/login?redirect=...`
+   * `/error?message=admin` → Use `&` → `/error?message=admin&redirect=...`
 4. **Build final URL:**
+
    ```javascript
    redirectUrl = `${redirectTo}${separator}redirect=${encodeURIComponent(redirectPath)}`;
    ```
-   - Encodes the redirect path for URL safety
-   - Preserves special characters
+   * Encodes the redirect path for URL safety
+   * Preserves special characters
 
 **Complete examples:**
 
 **Without excludeRedirectQuery (default):**
+
 ```javascript
 // Scenario 1
 redirectTo = "/login"
@@ -3248,6 +3458,7 @@ location.pathname = "/admin/users"
 ```
 
 **With excludeRedirectQuery = true:**
+
 ```javascript
 // Scenario 1
 redirectTo = "/error?message=admin_access_required"
@@ -3261,15 +3472,17 @@ excludeRedirectQuery = true
 ```
 
 **Why exclude redirect query?**
-- **Error pages:** User shouldn't return to inaccessible page
-- **Admin areas:** Non-admins shouldn't be redirected back
-- **Prevent loops:** Avoid infinite redirect cycles
+
+* **Error pages:** User shouldn't return to inaccessible page
+* **Admin areas:** Non-admins shouldn't be redirected back
+* **Prevent loops:** Avoid infinite redirect cycles
 
 #### Line 26: `navigate(redirectUrl, { replace: true });`
 
 Performs the actual redirect using the computed URL (either with or without redirect query parameter).
 
-**`redirectUrl` value examples:**
+`**redirectUrl**` **value examples:**
+
 ```javascript
 // With redirect parameter (excludeRedirectQuery = false)
 "/login?redirect=%2Fdashboard"
@@ -3281,11 +3494,12 @@ Performs the actual redirect using the computed URL (either with or without redi
 "/error?message=admin_required&redirect=%2Fadmin%2Fusers"
 ```
 
-**`{ replace: true }` option:**
+`**{ replace: true }**` **option:**
 
-**Why `replace: true`?**
+**Why** `**replace: true**`**?**
 
 Without replace (using push):
+
 ```
 History stack:
 1. /dashboard (protected, redirects)
@@ -3298,6 +3512,7 @@ History stack:
 ```
 
 With replace:
+
 ```
 History stack:
 1. /login (replaced /dashboard entry)
@@ -3316,7 +3531,8 @@ The dependency array - effect re-runs when any of these change.
 
 **Each dependency explained:**
 
-**`isInitialized`** - Auth completion flag
+`**isInitialized**` - Auth completion flag
+
 ```javascript
 // When it changes:
 false → true (auth completes)
@@ -3325,7 +3541,8 @@ false → true (auth completes)
 Triggers guard to run once auth is ready
 ```
 
-**`user`** - User object with roles/permissions
+`**user**` - User object with roles/permissions
+
 ```javascript
 // When it changes:
 null → {...} (login)
@@ -3336,7 +3553,8 @@ null → {...} (login)
 User permissions changed, need to re-verify access
 ```
 
-**`location.pathname`** - Current route path
+`**location.pathname**` - Current route path
+
 ```javascript
 // When it changes:
 "/dashboard" → "/admin" (navigation)
@@ -3345,7 +3563,8 @@ User permissions changed, need to re-verify access
 Route changed, need to check new route's access rules
 ```
 
-**`location.search`** - Query parameters
+`**location.search**` - Query parameters
+
 ```javascript
 // When it changes:
 "" → "?tab=settings"
@@ -3354,7 +3573,8 @@ Route changed, need to check new route's access rules
 Must preserve query params in redirect
 ```
 
-**`navigate`** - Navigation function
+`**navigate**` - Navigation function
+
 ```javascript
 // Rarely changes, but included for:
 - React Hook exhaustive deps rule
@@ -3561,6 +3781,7 @@ useEffect triggered (dependency changed)
 ### Why This Pattern Works
 
 **1. Gate-Keeping Prevents Loops**
+
 ```javascript
 // Without gate:
 mount → check access with user=null → redirect to login
@@ -3573,6 +3794,7 @@ auth completes → isInitialized=true → check ONCE with correct user
 ```
 
 **2. Runs on Every Navigation**
+
 ```javascript
 // Dependencies include location.pathname
 // Every route change triggers re-check
@@ -3580,6 +3802,7 @@ auth completes → isInitialized=true → check ONCE with correct user
 ```
 
 **3. Responds to Auth Changes**
+
 ```javascript
 // Dependencies include user
 // Login/logout triggers re-check
@@ -3587,6 +3810,7 @@ user: null → {...} → useEffect runs → re-verify current route
 ```
 
 **4. Preserves User Intent**
+
 ```javascript
 // Captures full path with query params
 // After login, can return to exact state
@@ -3596,6 +3820,7 @@ After login: Navigate to /products?category=electronics&page=2
 ```
 
 **5. Clean History Management**
+
 ```javascript
 // replace: true removes unauthorized attempts
 // Back button doesn't return to blocked pages
@@ -3605,6 +3830,7 @@ After login: Navigate to /products?category=electronics&page=2
 ### Common Mistakes to Avoid
 
 **❌ Forgetting the isInitialized check:**
+
 ```javascript
 useEffect(() => {
   // Runs immediately with user=null
@@ -3615,6 +3841,7 @@ useEffect(() => {
 ```
 
 **❌ Not preserving query parameters:**
+
 ```javascript
 // Only captures pathname
 const redirectPath = location.pathname;
@@ -3622,12 +3849,14 @@ const redirectPath = location.pathname;
 ```
 
 **❌ Not encoding redirect parameter:**
+
 ```javascript
 navigate(`${redirectTo}?redirect=${redirectPath}`);
 // Breaks with special characters in redirectPath
 ```
 
 **❌ Not using replace:**
+
 ```javascript
 navigate(`${redirectTo}?redirect=...`);
 // Unauthorized page stays in history
@@ -3635,6 +3864,7 @@ navigate(`${redirectTo}?redirect=...`);
 ```
 
 **❌ Missing dependencies:**
+
 ```javascript
 }, [isInitialized, user]);
 // Doesn't re-run on navigation
@@ -3643,7 +3873,8 @@ navigate(`${redirectTo}?redirect=...`);
 
 ### Integration with Other Components
 
-**Works with `routes.json`:**
+**Works with** `**routes.json**`**:**
+
 ```javascript
 getRouteConfig(location.pathname)
   ↓
@@ -3652,7 +3883,8 @@ Reads from routes.json
 Returns access rules
 ```
 
-**Works with `route.utils.js`:**
+**Works with** `**route.utils.js**`**:**
+
 ```javascript
 verifyRouteAccess(config.allow, user)
   ↓
@@ -3661,7 +3893,8 @@ Evaluates rules against user
 Returns allowed/denied
 ```
 
-**Works with `userSlice.js`:**
+**Works with** `**userSlice.js**`**:**
+
 ```javascript
 const { user } = useSelector(state => state.user)
   ↓
@@ -3671,6 +3904,7 @@ Passed to verifyRouteAccess
 ```
 
 **Works with React Router:**
+
 ```javascript
 const navigate = useNavigate();
 const location = useLocation();
@@ -3679,6 +3913,7 @@ Hooks from react-router-dom
   ↓
 Used for navigation and route detection
 ```
+
 
 ---
 
@@ -3703,7 +3938,7 @@ Used for navigation and route detection
      │            │<────────────── │                │               │
      │            │                │                │               │
      │ React App Starts            │                │               │
-     ├───────────────────────────────────────────> │               │
+     ├───────────────────────────────────────────>  │               │
      │            │                │                │               │
      │            │                │ useEffect()    │               │
      │            │                │ initializeAuth()               │
@@ -3711,8 +3946,8 @@ Used for navigation and route detection
      │            │                │ getApperClient()               │
      │            │                ├──────────────> │               │
      │            │                │                │               │
-     │            │                │ Return singleton│              │
-     │            │                │ <─────────────┤               │
+     │            │                │Return singleton│              │
+     │            │                │  <─────────────┤               │
      │            │                │                │               │
      │            │                │ ApperUI.setup()│               │
      │            │                │ with callbacks │               │
@@ -3939,6 +4174,7 @@ USAGE FLOW:
 5. userSlice updates trigger Root.jsx effects
 ```
 
+
 ---
 
 ## 13. The Gate-Keeping Mechanism
@@ -4152,16 +4388,18 @@ function Root() {
 ### Why Both Gates Are Necessary
 
 **GATE 1 (authInitialized) - UI Gate:**
-- Prevents rendering `<Outlet />` before auth check
-- Shows loading spinner
-- Prevents flash of content
-- Local state for immediate control
+
+* Prevents rendering `<Outlet />` before auth check
+* Shows loading spinner
+* Prevents flash of content
+* Local state for immediate control
 
 **GATE 2 (isInitialized) - Logic Gate:**
-- Prevents route guards from running prematurely
-- Waits for user state to be correct
-- Prevents infinite redirect loops
-- Redux state for app-wide awareness
+
+* Prevents route guards from running prematurely
+* Waits for user state to be correct
+* Prevents infinite redirect loops
+* Redux state for app-wide awareness
 
 **Example of what happens without GATE 2:**
 
@@ -4202,6 +4440,7 @@ useEffect(() => {
 // Auth completes → isInitialized = true → Effect runs ONCE with correct user
 // No loop
 ```
+
 
 ---
 
@@ -4409,6 +4648,7 @@ createRoute({
 })
 ```
 
+
 ---
 
 ## 15. Common Pitfalls
@@ -4416,6 +4656,7 @@ createRoute({
 ### Pitfall 1: Checking Routes Before isInitialized
 
 **Problem:**
+
 ```javascript
 // ❌ BAD
 useEffect(() => {
@@ -4428,6 +4669,7 @@ useEffect(() => {
 ```
 
 **Solution:**
+
 ```javascript
 // ✅ GOOD
 useEffect(() => {
@@ -4443,6 +4685,7 @@ useEffect(() => {
 ### Pitfall 2: Not Setting isInitialized in Error Case
 
 **Problem:**
+
 ```javascript
 // ❌ BAD
 const handleAuthError = (error) => {
@@ -4455,6 +4698,7 @@ const handleAuthError = (error) => {
 ```
 
 **Solution:**
+
 ```javascript
 // ✅ GOOD
 const handleAuthError = (error) => {
@@ -4467,6 +4711,7 @@ const handleAuthError = (error) => {
 ### Pitfall 3: Creating Multiple ApperClient Instances
 
 **Problem:**
+
 ```javascript
 // ❌ BAD
 import { ApperClient } from 'window.ApperSDK';
@@ -4480,6 +4725,7 @@ function Component() {
 ```
 
 **Solution:**
+
 ```javascript
 // ✅ GOOD
 import { getApperClient } from '@/services/apperClient';
@@ -4493,6 +4739,7 @@ function Component() {
 ### Pitfall 4: Not Deep Cloning in Redux
 
 **Problem:**
+
 ```javascript
 // ❌ BAD
 setUser: (state, action) => {
@@ -4502,6 +4749,7 @@ setUser: (state, action) => {
 ```
 
 **Solution:**
+
 ```javascript
 // ✅ GOOD
 setUser: (state, action) => {
@@ -4513,6 +4761,7 @@ setUser: (state, action) => {
 ### Pitfall 5: Forgetting Outlet in Parent Routes
 
 **Problem:**
+
 ```javascript
 // ❌ BAD
 function Layout() {
@@ -4530,6 +4779,7 @@ function Layout() {
 ```
 
 **Solution:**
+
 ```javascript
 // ✅ GOOD
 function Layout() {
@@ -4547,6 +4797,7 @@ function Layout() {
 ### Pitfall 6: Missing Suspense for Lazy Components
 
 **Problem:**
+
 ```javascript
 // ❌ BAD
 const Home = lazy(() => import("./Home"));
@@ -4559,6 +4810,7 @@ const Home = lazy(() => import("./Home"));
 ```
 
 **Solution:**
+
 ```javascript
 // ✅ GOOD
 const Home = lazy(() => import("./Home"));
@@ -4582,6 +4834,7 @@ createRoute({
 ### Pitfall 7: Incorrect Index Route Usage
 
 **Problem:**
+
 ```javascript
 // ❌ BAD
 {
@@ -4594,6 +4847,7 @@ createRoute({
 ```
 
 **Solution:**
+
 ```javascript
 // ✅ GOOD
 {
@@ -4608,6 +4862,7 @@ createRoute({
 ### Pitfall 8: Not Preserving Redirect in Login
 
 **Problem:**
+
 ```javascript
 // ❌ BAD
 useEffect(() => {
@@ -4619,6 +4874,7 @@ useEffect(() => {
 ```
 
 **Solution:**
+
 ```javascript
 // ✅ GOOD
 useEffect(() => {
@@ -4632,6 +4888,7 @@ useEffect(() => {
 }, [allowed, redirectTo, location]);
 ```
 
+
 ---
 
 ## 16. Technical Q&A
@@ -4639,23 +4896,27 @@ useEffect(() => {
 ### Q1: Why singleton for apperClient?
 
 **A:** Multiple instances cause:
-- Duplicate auth checks
-- Conflicting state
-- Race conditions
-- Performance issues
+
+* Duplicate auth checks
+* Conflicting state
+* Race conditions
+* Performance issues
 
 Singleton ensures one source of truth.
 
 ### Q2: When does the route guard actually run?
 
 **A:** The route guard runs:
+
+
 1. After `isInitialized` becomes true
 2. On every navigation (location.pathname changes)
 3. When user state changes (login/logout)
 
 It does NOT run:
-- Before authentication completes
-- During initial mount (until initialized)
+
+* Before authentication completes
+* During initial mount (until initialized)
 
 ### Q3: What if Apper SDK fails to load?
 
@@ -4698,6 +4959,7 @@ function evaluateRule(rule, user) {
 }
 ```
 
+
 ---
 
 ## Quick Reference Card
@@ -4705,7 +4967,7 @@ function evaluateRule(rule, user) {
 ### File Purposes
 
 | File | Purpose | Key Exports |
-|------|---------|-------------|
+|----|----|----|
 | `apperClient.js` | SDK wrapper singleton | `getApperClient()` |
 | `userSlice.js` | Redux auth state | `setUser`, `clearUser`, `setInitialized` |
 | `Root.jsx` | Auth orchestrator & route guard | `useAuth` hook |
@@ -4716,7 +4978,7 @@ function evaluateRule(rule, user) {
 ### State Properties
 
 | Property | Type | Purpose |
-|----------|------|---------|
+|----|----|----|
 | `user` | object\|null | User data with roles |
 | `isAuthenticated` | boolean | Has user? |
 | `isInitialized` | boolean | Auth check complete? (GATE KEY) |
@@ -4725,7 +4987,7 @@ function evaluateRule(rule, user) {
 ### Route Properties
 
 | Property | Type | Purpose |
-|----------|------|---------|
+|----|----|----|
 | `path` | string | URL pattern |
 | `index` | boolean | Index route (no path) |
 | `element` | ReactNode | Component to render |
@@ -4734,16 +4996,16 @@ function evaluateRule(rule, user) {
 
 ### Key Concepts
 
-- **Singleton Pattern**: One ApperClient instance
-- **Dual Gates**: authInitialized (UI) + isInitialized (logic)
-- **Gate-Keeping**: Don't check routes until auth completes
-- **Deep Clone**: Prevent Redux mutation issues
-- **Lazy Loading**: Code splitting for performance
-- **Outlet**: Renders child routes
+* **Singleton Pattern**: One ApperClient instance
+* **Dual Gates**: authInitialized (UI) + isInitialized (logic)
+* **Gate-Keeping**: Don't check routes until auth completes
+* **Deep Clone**: Prevent Redux mutation issues
+* **Lazy Loading**: Code splitting for performance
+* **Outlet**: Renders child routes
+
 
 ---
 
 **End of Technical Integration Guide**
 
 This document provides complete technical understanding of React Router v6 with Apper SDK integration. For implementation examples, see `ROUTING_TEMPLATE_QUICK_REF.md`. For AI training, see `AI_MASTER_PROMPT.md`.
-
