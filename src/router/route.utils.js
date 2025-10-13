@@ -146,6 +146,7 @@ export function verifyRouteAccess(config, user) {
         return {
             allowed: true,
             redirectTo: null,
+            excludeRedirectQuery: false,
             failed: []
         };
     }
@@ -157,6 +158,7 @@ export function verifyRouteAccess(config, user) {
         return {
             allowed,
             redirectTo: allowed ? null : (config.redirectOnDeny || "/login"),
+            excludeRedirectQuery: config.excludeRedirectQuery === true,
             failed: allowed ? [] : [`Custom function "${config.function}" failed`]
         };
     }
@@ -189,6 +191,7 @@ export function verifyRouteAccess(config, user) {
     return {
         allowed,
         redirectTo,
+        excludeRedirectQuery: config.excludeRedirectQuery === true,
         failed: failed.map(f => f.label)
     };
 }

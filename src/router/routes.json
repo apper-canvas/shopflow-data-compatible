@@ -176,13 +176,15 @@
                 ],
                 "operator": "AND"
             },
-            "redirectOnDeny": "/error?message=admin_access_required"
+            "redirectOnDeny": "/error?message=admin_access_required",
+            "excludeRedirectQuery": true
         }
     },
     "/admin/*": {
         "allow": {
             "function": "isCEO",
-            "redirectOnDeny": "/error?message=admin_access_required"
+            "redirectOnDeny": "/error?message=admin_access_required",
+            "excludeRedirectQuery": true
         }
     },
     "/admin/**/*": {
@@ -200,7 +202,8 @@
                 ],
                 "operator": "AND"
             },
-            "redirectOnDeny": "/error?message=admin_access_required"
+            "redirectOnDeny": "/error?message=admin_access_required",
+            "excludeRedirectQuery": true
         }
     },
     "/external": {
@@ -213,7 +216,8 @@
                     }
                 ]
             },
-            "redirectOnDeny": "/error?message=internal_users_only"
+            "redirectOnDeny": "/error?message=internal_users_only",
+            "excludeRedirectQuery": true
         }
     }
 }

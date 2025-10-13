@@ -49,13 +49,20 @@ export default function Root() {
     // Guard: exit early if no config or no allow rules
     if (!config?.allow) return;
 
-    const { allowed, redirectTo } = verifyRouteAccess(config.allow, user);
+    const { allowed, redirectTo, excludeRedirectQuery } = verifyRouteAccess(config.allow, user);
 
     // Guard: exit early if access is allowed or no redirect
     if (allowed || !redirectTo) return;
 
-    const redirectPath = location.pathname + location.search;
-    navigate(`${redirectTo}?redirect=${encodeURIComponent(redirectPath)}`, { replace: true });
+    // Build redirect URL - add redirect query param unless excluded
+    let redirectUrl = redirectTo;
+    if (!excludeRedirectQuery) {
+      const redirectPath = location.pathname + location.search;
+      const separator = redirectTo.includes('?') ? '&' : '?';
+      redirectUrl = `${redirectTo}${separator}redirect=${encodeURIComponent(redirectPath)}`;
+    }
+
+    navigate(redirectUrl, { replace: true });
   }, [isInitialized, user, location.pathname, location.search, navigate]);
 
   const initializeAuth = async () => {
