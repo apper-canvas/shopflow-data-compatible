@@ -41,16 +41,28 @@ export default function Root() {
   }, []);
 
   useEffect(() => {
-    if (isInitialized) {
-      const config = getRouteConfig(location.pathname);
+    // Guard: exit early if not initialized
+    if (!isInitialized) return;
 
-      const { allowed, redirectTo } = verifyRouteAccess(config.allow, user);
+    const config = getRouteConfig(location.pathname);
 
-      if (!allowed && redirectTo) {
-        const redirectPath = location.pathname + location.search;
-        navigate(`${redirectTo}?redirect=${encodeURIComponent(redirectPath)}`, { replace: true });
-      }
+    // Guard: exit early if no config or no allow rules
+    if (!config?.allow) return;
+
+    const { allowed, redirectTo, excludeRedirectQuery } = verifyRouteAccess(config.allow, user);
+
+    // Guard: exit early if access is allowed or no redirect
+    if (allowed || !redirectTo) return;
+
+    // Build redirect URL - add redirect query param unless excluded
+    let redirectUrl = redirectTo;
+    if (!excludeRedirectQuery) {
+      const redirectPath = location.pathname + location.search;
+      const separator = redirectTo.includes('?') ? '&' : '?';
+      redirectUrl = `${redirectTo}${separator}redirect=${encodeURIComponent(redirectPath)}`;
     }
+
+    navigate(redirectUrl, { replace: true });
   }, [isInitialized, user, location.pathname, location.search, navigate]);
 
   const initializeAuth = async () => {
@@ -140,9 +152,9 @@ export default function Root() {
 
   return (
     <AuthContext.Provider value={{ logout, isInitialized: authInitialized }}>
-      <div style={{ background: 'yellow', padding: '4px', fontSize: '12px' }}>
+      {/* <div style={{ background: 'yellow', padding: '4px', fontSize: '12px' }}>
         Auth: {isInitialized ? 'Ready' : 'Loading'} | User: {user ? 'Logged In' : 'Guest'}
-      </div>
+      </div> */}
       <Outlet />
     </AuthContext.Provider>
   );

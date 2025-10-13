@@ -1,197 +1,223 @@
 {
     "/": {
         "allow": {
-            "conditions": [
-                {
-                    "label": "Anyone can access",
-                    "rule": "public"
-                }
-            ]
+            "when": {
+                "conditions": [
+                    {
+                        "label": "Anyone can access",
+                        "rule": "public"
+                    }
+                ]
+            }
         }
     },
     "/product/:id": {
         "allow": {
-            "conditions": [
-                {
-                    "label": "Anyone can view products",
-                    "rule": "public"
-                }
-            ]
+            "when": {
+                "conditions": [
+                    {
+                        "label": "Anyone can view products",
+                        "rule": "public"
+                    }
+                ]
+            }
         }
     },
     "/category/:category": {
         "allow": {
-            "conditions": [
-                {
-                    "label": "Anyone can browse categories",
-                    "rule": "public"
-                }
-            ]
+            "when": {
+                "conditions": [
+                    {
+                        "label": "Anyone can browse categories",
+                        "rule": "public"
+                    }
+                ]
+            }
         }
     },
     "/login": {
         "allow": {
-            "conditions": [
-                {
-                    "label": "Login page is public",
-                    "rule": "public"
-                }
-            ]
+            "when": {
+                "conditions": [
+                    {
+                        "label": "Login page is public",
+                        "rule": "public"
+                    }
+                ]
+            }
         }
     },
     "/signup": {
         "allow": {
-            "conditions": [
-                {
-                    "label": "Signup page is public",
-                    "rule": "public"
-                }
-            ]
+            "when": {
+                "conditions": [
+                    {
+                        "label": "Signup page is public",
+                        "rule": "public"
+                    }
+                ]
+            }
         }
     },
     "/callback": {
         "allow": {
-            "conditions": [
-                {
-                    "label": "Auth callback is public",
-                    "rule": "public"
-                }
-            ]
+            "when": {
+                "conditions": [
+                    {
+                        "label": "Auth callback is public",
+                        "rule": "public"
+                    }
+                ]
+            }
         }
     },
     "/error": {
         "allow": {
-            "conditions": [
-                {
-                    "label": "Error page is public",
-                    "rule": "public"
-                }
-            ]
+            "when": {
+                "conditions": [
+                    {
+                        "label": "Error page is public",
+                        "rule": "public"
+                    }
+                ]
+            }
         }
     },
     "/search": {
         "allow": {
-            "conditions": [
-                {
-                    "label": "User must be logged in",
-                    "rule": "authenticated"
-                }
-            ]
+            "when": {
+                "conditions": [
+                    {
+                        "label": "User must be logged in",
+                        "rule": "authenticated"
+                    }
+                ]
+            },
+            "redirectOnDeny": "/login"
         }
     },
     "/wishlist": {
         "allow": {
-            "conditions": [
-                {
-                    "label": "User must be logged in",
-                    "rule": "authenticated"
-                }
-            ]
+            "when": {
+                "conditions": [
+                    {
+                        "label": "User must be logged in",
+                        "rule": "authenticated"
+                    }
+                ]
+            },
+            "redirectOnDeny": "/login"
         }
     },
     "/deals": {
         "allow": {
-            "conditions": [
-                {
-                    "label": "User must be logged in",
-                    "rule": "authenticated"
-                }
-            ]
+            "when": {
+                "conditions": [
+                    {
+                        "label": "User must be logged in",
+                        "rule": "authenticated"
+                    }
+                ]
+            },
+            "redirectOnDeny": "/login"
         }
     },
     "/orders": {
         "allow": {
-            "conditions": [
-                {
-                    "label": "User must be logged in",
-                    "rule": "authenticated"
-                }
-            ]
+            "when": {
+                "conditions": [
+                    {
+                        "label": "User must be logged in",
+                        "rule": "authenticated"
+                    }
+                ]
+            },
+            "redirectOnDeny": "/login"
         }
     },
     "/checkout": {
         "allow": {
-            "conditions": [
-                {
-                    "label": "User must be logged in",
-                    "rule": "authenticated"
-                }
-            ]
+            "when": {
+                "conditions": [
+                    {
+                        "label": "User must be logged in",
+                        "rule": "authenticated"
+                    }
+                ]
+            },
+            "redirectOnDeny": "/login"
         }
     },
     "/checkout/*": {
         "allow": {
-            "conditions": [
-                {
-                    "label": "User must be logged in",
-                    "rule": "authenticated"
-                }
-            ]
+            "when": {
+                "conditions": [
+                    {
+                        "label": "User must be logged in",
+                        "rule": "authenticated"
+                    }
+                ]
+            },
+            "redirectOnDeny": "/login"
         }
     },
     "/admin": {
         "allow": {
-            "conditions": [
-                {
-                    "label": "User must be logged in",
-                    "rule": "authenticated"
-                },
-                {
-                    "label": "Role must be Admin",
-                    "rule": "role:admin"
-                }
-            ],
-            "operator": "AND"
+            "when": {
+                "conditions": [
+                    {
+                        "label": "User must be logged in",
+                        "rule": "authenticated"
+                    },
+                    {
+                        "label": "Role must be Admin",
+                        "rule": "emailAddress == \"admin@example.com\""
+                    }
+                ],
+                "operator": "AND"
+            },
+            "redirectOnDeny": "/error?message=admin_access_required",
+            "excludeRedirectQuery": true
         }
     },
     "/admin/*": {
         "allow": {
-            "conditions": [
-                {
-                    "label": "User must be logged in",
-                    "rule": "authenticated"
-                },
-                {
-                    "label": "Role must be Admin",
-                    "rule": "role:admin"
-                }
-            ],
-            "operator": "AND"
+            "function": "isCEO",
+            "redirectOnDeny": "/error?message=admin_access_required",
+            "excludeRedirectQuery": true
         }
     },
     "/admin/**/*": {
         "allow": {
-            "conditions": [
-                {
-                    "label": "User must be logged in",
-                    "rule": "authenticated"
-                },
-                {
-                    "label": "Role must be Admin",
-                    "rule": "role:admin"
-                }
-            ],
-            "operator": "AND"
-        }
-    },
-    "/premium/*": {
-        "allow": {
-            "conditions": [
-                {
-                    "label": "Plan must be Premium",
-                    "rule": "plan:premium"
-                }
-            ]
+            "when": {
+                "conditions": [
+                    {
+                        "label": "User must be logged in",
+                        "rule": "authenticated"
+                    },
+                    {
+                        "label": "Role must be Admin",
+                        "rule": "accounts[0].profile.name == 'CEO'"
+                    }
+                ],
+                "operator": "AND"
+            },
+            "redirectOnDeny": "/error?message=admin_access_required",
+            "excludeRedirectQuery": true
         }
     },
     "/external": {
         "allow": {
-            "conditions": [
-                {
-                    "label": "Must be external user",
-                    "rule": "external:true"
-                }
-            ]
+            "when": {
+                "conditions": [
+                    {
+                        "label": "Must be external user",
+                        "rule": "userMetadata.isExternal"
+                    }
+                ]
+            },
+            "redirectOnDeny": "/error?message=internal_users_only",
+            "excludeRedirectQuery": true
         }
     }
 }
