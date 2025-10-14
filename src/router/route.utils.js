@@ -141,8 +141,8 @@ function executeCustomFunction(functionName, user) {
 }
 
 export function verifyRouteAccess(config, user) {
-    // If no config exists, allow access (let React Router handle it)
-    if (!config) {
+    // If no config exists or user exists, allow access (let React Router handle it)
+    if (!config || !user) {
         return {
             allowed: true,
             redirectTo: null,
