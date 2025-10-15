@@ -137,9 +137,9 @@ export default function Root() {
 
   const logout = async () => {
     try {
-      await window.ApperSDK?.ApperUI?.logout();
       dispatch(clearUser());
       navigate("/login");
+      await window.ApperSDK?.ApperUI?.logout();
     } catch (error) {
       console.error("Logout failed:", error);
     }
