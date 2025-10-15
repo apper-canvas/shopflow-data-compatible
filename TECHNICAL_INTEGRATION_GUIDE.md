@@ -1752,27 +1752,31 @@ executeCustomFunction("isCEO", user)
 ```javascript
 export function verifyRouteAccess(config, user) {
     // If no config exists, allow access (let React Router handle it)
-    if (!config) {
+    if (!config || !config.allow) {
         return {
             allowed: true,
             redirectTo: null,
+            excludeRedirectQuery: false,
             failed: []
         };
     }
 
+    const allowedConfig = config.allow;
+
     // If custom function is specified, use it instead of when conditions
-    if (config.function) {
-        const allowed = executeCustomFunction(config.function, user);
+    if (allowedConfig.function) {
+        const allowed = executeCustomFunction(allowedConfig.function, user);
 
         return {
             allowed,
-            redirectTo: allowed ? null : (config.redirectOnDeny || "/login"),
-            failed: allowed ? [] : [`Custom function "${config.function}" failed`]
+            redirectTo: allowed ? null : (allowedConfig.redirectOnDeny || "/login"),
+            excludeRedirectQuery: allowedConfig.excludeRedirectQuery === true,
+            failed: allowed ? [] : [`Custom function "${allowedConfig.function}" failed`]
         };
     }
 
     // Otherwise, use the when conditions as before
-    const whenClause = config.when || config;
+    const whenClause = allowedConfig.when || allowedConfig;
     const { conditions = [], operator = "OR" } = whenClause;
 
     // Evaluate all conditions
@@ -1792,14 +1796,14 @@ export function verifyRouteAccess(config, user) {
     // Determine redirect
     let redirectTo = null;
     if (!allowed) {
-        // Use config's redirectOnDeny if available, otherwise redirect to login
-        redirectTo = config.redirectOnDeny || "/login";
+        // Use allowedConfig's redirectOnDeny if available, otherwise redirect to login
+        redirectTo = allowedConfig.redirectOnDeny || "/login";
     }
 
     return {
         allowed,
         redirectTo,
-        excludeRedirectQuery: config.excludeRedirectQuery === true,
+        excludeRedirectQuery: allowedConfig.excludeRedirectQuery === true,
         failed: failed.map(f => f.label)
     };
 }
@@ -1877,7 +1881,7 @@ verifyRouteAccess(
 const config = getRouteConfig("/admin/users");
 
 // 2. Check if user has access
-const {allowed, redirectTo} = verifyRouteAccess(config.allow, user);
+const {allowed, redirectTo} = verifyRouteAccess(config, user);
 
 // 3. Redirect if not allowed
 if (!allowed) {
@@ -2058,7 +2062,7 @@ User stays on error page (no automatic return to /admin)
 The `excludeRedirectQuery` flag is used when building the redirect URL:
 
 ```javascript
-const { allowed, redirectTo, excludeRedirectQuery } = verifyRouteAccess(config.allow, user);
+const { allowed, redirectTo, excludeRedirectQuery } = verifyRouteAccess(config, user);
 
 // Build redirect URL - add redirect query param unless excluded
 let redirectUrl = redirectTo;
@@ -2832,7 +2836,7 @@ export default function Root() {
     if (!config?.allow) return;
 
     // Verify user has access
-    const { allowed, redirectTo, excludeRedirectQuery } = verifyRouteAccess(config.allow, user);
+    const { allowed, redirectTo, excludeRedirectQuery } = verifyRouteAccess(config, user);
 
     // Guard 3: Exit if access is allowed or no redirect
     if (allowed || !redirectTo) return;
@@ -2959,9 +2963,9 @@ export default function Root() {
    */
   const logout = async () => {
     try {
-      await window.ApperSDK?.ApperUI?.logout();
       dispatch(clearUser());
       navigate("/login");
+      await window.ApperSDK?.ApperUI?.logout();
     } catch (error) {
       console.error("Logout failed:", error);
     }
@@ -3077,7 +3081,7 @@ useEffect(() => {
   if (isInitialized) {
     // ✅ GATE OPEN - Safe to check routes
     const config = getRouteConfig(location.pathname);
-    const { allowed, redirectTo } = verifyRouteAccess(config.allow, user);
+    const { allowed, redirectTo } = verifyRouteAccess(config, user);
     
     if (!allowed && redirectTo) {
       navigate(redirectTo);
@@ -3256,7 +3260,7 @@ useEffect(() => {
   if (!config?.allow) return;
 
   // Verify user has access
-  const { allowed, redirectTo, excludeRedirectQuery } = verifyRouteAccess(config.allow, user);
+  const { allowed, redirectTo, excludeRedirectQuery } = verifyRouteAccess(config, user);
 
   // Guard 3: Exit if access is allowed or no redirect
   if (allowed || !redirectTo) return;
@@ -3351,7 +3355,7 @@ Fetches access control rules for the current route from `routes.json`.
 
 #### Line 11: Verify Access with All Return Values
 
-`**const { allowed, redirectTo, excludeRedirectQuery } = verifyRouteAccess(config.allow, user);**`
+`**const { allowed, redirectTo, excludeRedirectQuery } = verifyRouteAccess(config, user);**`
 
 Evaluates whether the current user meets the access requirements.
 
@@ -3916,7 +3920,7 @@ Returns access rules
 **Works with** `**route.utils.js**`**:**
 
 ```javascript
-verifyRouteAccess(config.allow, user)
+verifyRouteAccess(config, user)
   ↓
 Evaluates rules against user
   ↓
@@ -4339,7 +4343,7 @@ function Root() {
       // ✅ Auth complete, safe to check routes
       
       const config = getRouteConfig(location.pathname);
-      const { allowed, redirectTo } = verifyRouteAccess(config.allow, user);
+      const { allowed, redirectTo } = verifyRouteAccess(config, user);
       
       if (!allowed && redirectTo) {
         const redirectPath = location.pathname + location.search;
