@@ -49,7 +49,7 @@ export default function Root() {
     // Guard: exit early if no config or no allow rules
     if (!config?.allow) return;
 
-    const { allowed, redirectTo, excludeRedirectQuery } = verifyRouteAccess(config.allow, user);
+    const { allowed, redirectTo, excludeRedirectQuery } = verifyRouteAccess(config, user);
 
     // Guard: exit early if access is allowed or no redirect
     if (allowed || !redirectTo) return;

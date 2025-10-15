@@ -141,8 +141,8 @@ function executeCustomFunction(functionName, user) {
 }
 
 export function verifyRouteAccess(config, user) {
-    // If no config exists or user exists, allow access (let React Router handle it)
-    if (!config || !user) {
+    // If no config exists, allow access (let React Router handle it)
+    if (!config || !config.allow) {
         return {
             allowed: true,
             redirectTo: null,
@@ -151,20 +151,22 @@ export function verifyRouteAccess(config, user) {
         };
     }
 
+    const allowedConfig = config.allow;
+
     // If custom function is specified, use it instead of when conditions
-    if (config.function) {
-        const allowed = executeCustomFunction(config.function, user);
+    if (allowedConfig.function) {
+        const allowed = executeCustomFunction(allowedConfig.function, user);
 
         return {
             allowed,
-            redirectTo: allowed ? null : (config.redirectOnDeny || "/login"),
-            excludeRedirectQuery: config.excludeRedirectQuery === true,
-            failed: allowed ? [] : [`Custom function "${config.function}" failed`]
+            redirectTo: allowed ? null : (allowedConfig.redirectOnDeny || "/login"),
+            excludeRedirectQuery: allowedConfig.excludeRedirectQuery === true,
+            failed: allowed ? [] : [`Custom function "${allowedConfig.function}" failed`]
         };
     }
 
     // Otherwise, use the when conditions as before
-    const whenClause = config.when || config;
+    const whenClause = allowedConfig.when || allowedConfig;
     const { conditions = [], operator = "OR" } = whenClause;
 
     // Evaluate all conditions
@@ -184,14 +186,14 @@ export function verifyRouteAccess(config, user) {
     // Determine redirect
     let redirectTo = null;
     if (!allowed) {
-        // Use config's redirectOnDeny if available, otherwise redirect to login
-        redirectTo = config.redirectOnDeny || "/login";
+        // Use allowedConfig's redirectOnDeny if available, otherwise redirect to login
+        redirectTo = allowedConfig.redirectOnDeny || "/login";
     }
 
     return {
         allowed,
         redirectTo,
-        excludeRedirectQuery: config.excludeRedirectQuery === true,
+        excludeRedirectQuery: allowedConfig.excludeRedirectQuery === true,
         failed: failed.map(f => f.label)
     };
 }
