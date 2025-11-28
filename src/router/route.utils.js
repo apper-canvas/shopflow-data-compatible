@@ -3,7 +3,7 @@ import routeConfig from "./routes.json";
 // Custom authorization functions registry
 const customFunctions = {
     isCEO: (user) => {
-        return user && user.accounts[0].profile.name === 'CEO1';
+        return user && user.accounts[0].profile.name === 'CEO';
     }
 };
 
