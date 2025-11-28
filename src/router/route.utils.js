@@ -141,7 +141,7 @@ function executeCustomFunction(functionName, user) {
 }
 
 // Helper function to resolve redirectOnDeny value
-function resolveRedirectPath({ redirectOnDeny, isPermissionDenied = false, user = null }) {
+function resolveRedirectPath({ redirectOnDeny }) {
     // If redirectOnDeny is not provided, use default login
     if (!redirectOnDeny) {
         return "/login";
@@ -186,9 +186,7 @@ export function verifyRouteAccess(config, user) {
         return {
             allowed,
             redirectTo: allowed ? null : resolveRedirectPath({
-                redirectOnDeny: allowedConfig.redirectOnDeny,
-                isPermissionDenied: !allowed && !!user,
-                user
+                redirectOnDeny: allowedConfig.redirectOnDeny
             }),
             excludeRedirectQuery: allowedConfig.excludeRedirectQuery === true,
             failed: allowed ? [] : [`Custom function "${allowedConfig.function}" failed`]
@@ -216,18 +214,8 @@ export function verifyRouteAccess(config, user) {
     // Determine redirect
     let redirectTo = null;
     if (!allowed) {
-        // Determine if this is an authentication issue or permission issue
-        const hasAuthenticationRule = conditions.some(c => c.rule === "authenticated");
-        const authenticationFailed = hasAuthenticationRule && !user;
-
-        // If user is not authenticated, use default path
-        // If user is authenticated but lacks permissions, use permission path
-        const isPermissionDenied = !authenticationFailed && failed.length > 0;
-
         redirectTo = resolveRedirectPath({
-            redirectOnDeny: allowedConfig.redirectOnDeny,
-            isPermissionDenied,
-            user
+            redirectOnDeny: allowedConfig.redirectOnDeny
         });
     }
 
