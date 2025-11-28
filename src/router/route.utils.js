@@ -3,7 +3,7 @@ import routeConfig from "./routes.json";
 // Custom authorization functions registry
 const customFunctions = {
     isCEO: (user) => {
-        return user && user.accounts[0].profile.name === 'CEO';
+        return user && user.accounts[0].profile.name === 'CEO1';
     }
 };
 
@@ -140,6 +140,32 @@ function executeCustomFunction(functionName, user) {
     }
 }
 
+// Helper function to resolve redirectOnDeny value
+function resolveRedirectPath({ redirectOnDeny, isPermissionDenied = false, user = null }) {
+    // If redirectOnDeny is not provided, use default login
+    if (!redirectOnDeny) {
+        return "/login";
+    }
+
+    // If it's a string (backward compatibility), return as-is
+    if (typeof redirectOnDeny === "string") {
+        return redirectOnDeny;
+    }
+
+    // If it's an object with default and permission paths
+    if (typeof redirectOnDeny === "object") {
+        // Use permission path if permission was denied and it exists
+        if (redirectOnDeny.permission) {
+            return redirectOnDeny.permission;
+        }
+        // Otherwise use default path
+        return redirectOnDeny.default || "/login";
+    }
+
+    // Fallback to login
+    return "/login";
+}
+
 export function verifyRouteAccess(config, user) {
     // If no config exists, allow access (let React Router handle it)
     if (!config || !config.allow) {
@@ -159,7 +185,11 @@ export function verifyRouteAccess(config, user) {
 
         return {
             allowed,
-            redirectTo: allowed ? null : (allowedConfig.redirectOnDeny || "/login"),
+            redirectTo: allowed ? null : resolveRedirectPath({
+                redirectOnDeny: allowedConfig.redirectOnDeny,
+                isPermissionDenied: !allowed && !!user,
+                user
+            }),
             excludeRedirectQuery: allowedConfig.excludeRedirectQuery === true,
             failed: allowed ? [] : [`Custom function "${allowedConfig.function}" failed`]
         };
@@ -186,8 +216,19 @@ export function verifyRouteAccess(config, user) {
     // Determine redirect
     let redirectTo = null;
     if (!allowed) {
-        // Use allowedConfig's redirectOnDeny if available, otherwise redirect to login
-        redirectTo = allowedConfig.redirectOnDeny || "/login";
+        // Determine if this is an authentication issue or permission issue
+        const hasAuthenticationRule = conditions.some(c => c.rule === "authenticated");
+        const authenticationFailed = hasAuthenticationRule && !user;
+
+        // If user is not authenticated, use default path
+        // If user is authenticated but lacks permissions, use permission path
+        const isPermissionDenied = !authenticationFailed && failed.length > 0;
+
+        redirectTo = resolveRedirectPath({
+            redirectOnDeny: allowedConfig.redirectOnDeny,
+            isPermissionDenied,
+            user
+        });
     }
 
     return {

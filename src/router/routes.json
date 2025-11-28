@@ -93,7 +93,10 @@
                     }
                 ]
             },
-            "redirectOnDeny": "/login"
+            "redirectOnDeny": {
+                "default": "/login",
+                "permission": "/error?message=authentication_required"
+            }
         }
     },
     "/wishlist": {
@@ -106,7 +109,10 @@
                     }
                 ]
             },
-            "redirectOnDeny": "/login"
+            "redirectOnDeny": {
+                "default": "/login",
+                "permission": "/error?message=authentication_required"
+            }
         }
     },
     "/deals": {
@@ -119,7 +125,10 @@
                     }
                 ]
             },
-            "redirectOnDeny": "/login"
+            "redirectOnDeny": {
+                "default": "/login",
+                "permission": "/error?message=authentication_required"
+            }
         }
     },
     "/orders": {
@@ -132,7 +141,10 @@
                     }
                 ]
             },
-            "redirectOnDeny": "/login"
+            "redirectOnDeny": {
+                "default": "/login",
+                "permission": "/error?message=authentication_required"
+            }
         }
     },
     "/checkout": {
@@ -145,7 +157,10 @@
                     }
                 ]
             },
-            "redirectOnDeny": "/login"
+            "redirectOnDeny": {
+                "default": "/login",
+                "permission": "/error?message=authentication_required"
+            }
         }
     },
     "/checkout/*": {
@@ -158,7 +173,10 @@
                     }
                 ]
             },
-            "redirectOnDeny": "/login"
+            "redirectOnDeny": {
+                "default": "/login",
+                "permission": "/error?message=authentication_required"
+            }
         }
     },
     "/admin": {
@@ -176,14 +194,20 @@
                 ],
                 "operator": "AND"
             },
-            "redirectOnDeny": "/error?message=admin_access_required",
+            "redirectOnDeny": {
+                "default": "/login",
+                "permission": "/error?message=admin_access_required"
+            },
             "excludeRedirectQuery": true
         }
     },
     "/admin/*": {
         "allow": {
             "function": "isCEO",
-            "redirectOnDeny": "/error?message=admin_access_required",
+            "redirectOnDeny": {
+                "default": "/login",
+                "permission": "/error?message=admin_access_required"
+            },
             "excludeRedirectQuery": true
         }
     },
@@ -202,7 +226,10 @@
                 ],
                 "operator": "AND"
             },
-            "redirectOnDeny": "/error?message=admin_access_required",
+            "redirectOnDeny": {
+                "default": "/login",
+                "permission": "/error?message=admin_access_required"
+            },
             "excludeRedirectQuery": true
         }
     },
@@ -216,7 +243,10 @@
                     }
                 ]
             },
-            "redirectOnDeny": "/error?message=internal_users_only",
+            "redirectOnDeny": {
+                "default": "/login",
+                "permission": "/error?message=internal_users_only"
+            },
             "excludeRedirectQuery": true
         }
     }
